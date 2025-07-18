@@ -1,0 +1,20 @@
+# SwiftFormat configuration
+--indent 2
+--tabwidth 2
+--maxwidth 100
+--wraparguments before-first
+--wrapcollections before-first
+--closingparen same-line
+--commas inline
+--trimwhitespace always
+--insertlines enabled
+--removelines enabled
+--semicolons never
+--operatorfunc spaced
+--nospaceoperators ...,..<
+--ranges spaced
+--typeblanklines remove
+--varattributes prev-line
+--funcattributes prev-line
+--typeattributes prev-line
+--modifierorder public,internal,fileprivate,private,static,class,final,required,convenience,override,mutating,nonmutating,dynamic,optional,lazy,weak,unowned

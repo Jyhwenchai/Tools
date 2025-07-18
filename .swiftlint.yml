@@ -1,0 +1,50 @@
+# SwiftLint configuration
+disabled_rules:
+  - trailing_whitespace
+  - todo
+
+opt_in_rules:
+  - empty_count
+  - force_unwrapping
+  - closure_spacing
+  - operator_usage_whitespace
+  - redundant_nil_coalescing
+  - sorted_imports
+  - vertical_parameter_alignment_on_call
+
+line_length:
+  warning: 100
+  error: 120
+
+identifier_name:
+  min_length: 2
+  max_length: 40
+  excluded:
+    - id
+    - x
+    - y
+
+type_name:
+  min_length: 3
+  max_length: 40
+
+function_body_length:
+  warning: 50
+  error: 100
+
+file_length:
+  warning: 400
+  error: 500
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+
+nesting:
+  type_level: 2
+
+excluded:
+  - Pods
+  - .build
+  - DerivedData
+  - Tools.xcodeproj
