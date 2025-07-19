@@ -18,6 +18,7 @@ class NavigationManager {
     case qrCode = "二维码"
     case timeConverter = "时间转换"
     case clipboard = "粘贴板"
+    case settings = "设置"
 
     var id: String { rawValue }
 
@@ -29,6 +30,7 @@ class NavigationManager {
       case .qrCode: return "qrcode"
       case .timeConverter: return "clock"
       case .clipboard: return "doc.on.clipboard"
+      case .settings: return "gearshape"
       }
     }
 
@@ -42,6 +44,7 @@ class NavigationManager {
       case .qrCode: return "二维码生成和识别"
       case .timeConverter: return "时间格式转换"
       case .clipboard: return "粘贴板历史管理"
+      case .settings: return "应用设置和偏好"
       }
     }
   }

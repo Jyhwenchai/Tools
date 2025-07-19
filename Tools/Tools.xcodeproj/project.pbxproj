@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		18DD416A2E2B6109004DCB31 /* Highlightr in Frameworks */ = {isa = PBXBuildFile; productRef = 18DD41692E2B6109004DCB31 /* Highlightr */; };
+		18DD416D2E2B618B004DCB31 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 18DD416C2E2B618B004DCB31 /* SwiftUIIntrospect */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D50BFA822E28E195002E3DB5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				18DD416A2E2B6109004DCB31 /* Highlightr in Frameworks */,
+				18DD416D2E2B618B004DCB31 /* SwiftUIIntrospect in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = Tools;
 			packageProductDependencies = (
+				18DD41692E2B6109004DCB31 /* Highlightr */,
+				18DD416C2E2B618B004DCB31 /* SwiftUIIntrospect */,
 			);
 			productName = Tools;
 			productReference = D50BFA732E28E194002E3DB5 /* Tools.app */;
@@ -195,6 +204,10 @@
 			);
 			mainGroup = D50BFA6A2E28E194002E3DB5;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				18DD41682E2B6109004DCB31 /* XCRemoteSwiftPackageReference "Highlightr" */,
+				18DD416B2E2B618B004DCB31 /* XCRemoteSwiftPackageReference "swiftui-introspect" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D50BFA742E28E194002E3DB5 /* Products */;
 			projectDirPath = "";
@@ -551,6 +564,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		18DD41682E2B6109004DCB31 /* XCRemoteSwiftPackageReference "Highlightr" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/raspu/Highlightr.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+		18DD416B2E2B618B004DCB31 /* XCRemoteSwiftPackageReference "swiftui-introspect" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/siteline/swiftui-introspect";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		18DD41692E2B6109004DCB31 /* Highlightr */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 18DD41682E2B6109004DCB31 /* XCRemoteSwiftPackageReference "Highlightr" */;
+			productName = Highlightr;
+		};
+		18DD416C2E2B618B004DCB31 /* SwiftUIIntrospect */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 18DD416B2E2B618B004DCB31 /* XCRemoteSwiftPackageReference "swiftui-introspect" */;
+			productName = SwiftUIIntrospect;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D50BFA6B2E28E194002E3DB5 /* Project object */;
 }
