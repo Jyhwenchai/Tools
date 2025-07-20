@@ -204,13 +204,11 @@ struct EncryptionViewTests {
     // 测试不同类型的错误，模拟UI错误状态管理
     let invalidInputError = ToolError.invalidInput("测试错误")
     let processingFailedError = ToolError.processingFailed("处理失败")
-    let fileAccessError = ToolError.fileAccessDenied
     let unsupportedFormatError = ToolError.unsupportedFormat
     
     // 验证错误描述
     #expect(invalidInputError.localizedDescription.contains("输入无效"))
     #expect(processingFailedError.localizedDescription.contains("处理失败"))
-    #expect(fileAccessError.localizedDescription.contains("文件访问被拒绝"))
     #expect(unsupportedFormatError.localizedDescription.contains("不支持的格式"))
   }
   

@@ -197,7 +197,7 @@ extension RetryService {
       shouldRetry: { error in
         if let toolError = error as? ToolError {
           switch toolError {
-          case .fileAccessDenied, .systemResourceUnavailable:
+          case .systemResourceUnavailable:
             return true
           default:
             return false

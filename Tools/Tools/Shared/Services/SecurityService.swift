@@ -19,7 +19,10 @@ class SecurityService {
   private let keychain = KeychainService.shared
   
   private init() {
-    setupSecurityMonitoring()
+    // Defer security monitoring setup to improve startup performance
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+      self.setupSecurityMonitoring()
+    }
   }
   
   // MARK: - Data Security
@@ -57,56 +60,10 @@ class SecurityService {
     }
   }
   
-  // MARK: - Permission Management
-  
-  /// Request necessary system permissions
-  func requestRequiredPermissions() async -> Bool {
-    var allPermissionsGranted = true
-    
-    // Request file access permission
-    let fileAccessGranted = await requestFileAccessPermission()
-    if !fileAccessGranted {
-      allPermissionsGranted = false
-    }
-    
-    // Request clipboard access permission (implicit through usage)
-    let clipboardAccessGranted = requestClipboardAccessPermission()
-    if !clipboardAccessGranted {
-      allPermissionsGranted = false
-    }
-    
-    return allPermissionsGranted
-  }
-  
-  /// Request file access permission
-  private func requestFileAccessPermission() async -> Bool {
-    // In sandboxed apps, file access is granted through user selection
-    // We'll show a dialog explaining the need for file access
-    return await MainActor.run {
-      let alert = NSAlert()
-      alert.messageText = "文件访问权限"
-      alert.informativeText = "应用需要访问您选择的文件来进行图片处理和文件操作。所有处理都在本地完成，不会上传到网络。"
-      alert.addButton(withTitle: "允许")
-      alert.addButton(withTitle: "拒绝")
-      alert.alertStyle = .informational
-      
-      let response = alert.runModal()
-      return response == .alertFirstButtonReturn
-    }
-  }
-  
-  /// Request clipboard access permission
-  private func requestClipboardAccessPermission() -> Bool {
-    // Test clipboard access
-    let pasteboard = NSPasteboard.general
-    let currentChangeCount = pasteboard.changeCount
-    
-    // Try to read clipboard content
-    let _ = pasteboard.string(forType: .string)
-    
-    // If we can read the change count, we have access
-    return pasteboard.changeCount >= currentChangeCount
-  }
+  // MARK: - Data Validation and Security
+  // Note: Permission management has been moved to individual services
+  // - Clipboard permissions: handled by ClipboardService
+  // - File access: using system dialogs (no permissions needed)
   
   // MARK: - App Lifecycle Security
   

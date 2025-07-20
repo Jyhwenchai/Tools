@@ -10,21 +10,27 @@ import SwiftUI
 struct ContentView: View {
   @State private var navigationManager = NavigationManager()
   @State private var settings = AppSettings.shared
-  @State private var performanceMonitor = PerformanceMonitor.shared
+  @State private var isInitialized = false
+  
+  #if DEBUG
+  @State private var performanceMonitor: PerformanceMonitor?
   @State private var showPerformanceAlert = false
+  #endif
 
   var body: some View {
     NavigationSplitView {
       SidebarView(selection: $navigationManager.selectedTool)
         .navigationSplitViewColumnWidth(240)
-        .withMemoryManagement()
     } detail: {
       ToolDetailView(tool: navigationManager.selectedTool)
         .navigationSplitViewColumnWidth(min: 600, ideal: 800)
-        .withMemoryManagement()
     }
     .navigationSplitViewStyle(.balanced)
     .preferredColorScheme(settings.theme.colorScheme)
+    .task {
+      await initializeContentView()
+    }
+    #if DEBUG
     .overlay(alignment: .topTrailing) {
       performanceIndicator
     }
@@ -39,17 +45,35 @@ struct ContentView: View {
     } message: {
       Text(performanceWarningMessage)
     }
-    .onChange(of: performanceMonitor.performanceWarnings) { _, warnings in
+    .onChange(of: performanceMonitor?.performanceWarnings ?? []) { _, warnings in
       if !warnings.isEmpty && !showPerformanceAlert {
         showPerformanceAlert = true
       }
     }
+    #endif
   }
   
-  // MARK: - Performance Indicator
+  // MARK: - Lazy Initialization
+  private func initializeContentView() async {
+    guard !isInitialized else { return }
+    
+    // Delay performance monitor initialization to improve startup
+    #if DEBUG
+    await Task.detached(priority: .background) {
+      await MainActor.run {
+        self.performanceMonitor = PerformanceMonitor.shared
+      }
+    }.value
+    #endif
+    
+    isInitialized = true
+  }
+  
+  // MARK: - Performance Indicator (DEBUG Only)
+  #if DEBUG
   @ViewBuilder
   private var performanceIndicator: some View {
-    if !performanceMonitor.isPerformanceOptimal {
+    if let monitor = performanceMonitor, !monitor.isPerformanceOptimal {
       HStack(spacing: 8) {
         Image(systemName: "exclamationmark.triangle.fill")
           .foregroundColor(.orange)
@@ -70,7 +94,11 @@ struct ContentView: View {
   }
   
   private var performanceWarningMessage: String {
-    let warnings = performanceMonitor.performanceWarnings
+    guard let monitor = performanceMonitor else {
+      return "性能监控初始化中..."
+    }
+    
+    let warnings = monitor.performanceWarnings
     if warnings.isEmpty {
       return "应用性能正常"
     }
@@ -81,6 +109,7 @@ struct ContentView: View {
   private func optimizePerformance() {
     NotificationCenter.default.post(name: .performanceOptimizationNeeded, object: nil)
   }
+  #endif
 }
 
 struct SidebarView: View {
@@ -217,15 +246,16 @@ struct ToolDetailView: View {
   }
   
   private func getLoadingDelay(for tool: NavigationManager.ToolType) -> Double {
+    // Reduced loading delays for better startup performance
     switch tool {
     case .clipboard:
-      return 0.15 // Clipboard needs to load history
+      return 0.08 // Reduced from 0.15
     case .imageProcessing:
-      return 0.12 // Image processing needs Core Image setup
+      return 0.06 // Reduced from 0.12
     case .settings:
-      return 0.05 // Settings are lightweight
+      return 0.02 // Reduced from 0.05
     default:
-      return 0.08 // Standard loading time
+      return 0.04 // Reduced from 0.08
     }
   }
 }

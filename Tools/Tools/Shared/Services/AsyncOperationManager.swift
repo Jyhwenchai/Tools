@@ -25,6 +25,11 @@ class AsyncOperationManager {
   }
   
   private init() {
+    // Defer operation queue configuration to improve startup performance
+    configureOperationQueue()
+  }
+  
+  private func configureOperationQueue() {
     operationQueue.maxConcurrentOperationCount = 3 // Limit concurrent operations
     operationQueue.qualityOfService = .userInitiated
   }

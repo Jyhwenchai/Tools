@@ -128,16 +128,61 @@ struct PerformanceMonitorTests {
     monitor.startPerformanceMonitoring()
     
     // 验证监控正在运行（通过检查是否有性能数据更新）
-    let initialReport = monitor.getPerformanceReport()
+    let _ = monitor.getPerformanceReport()
     
-    // 等待监控更新
+    // 在DEBUG模式下等待监控更新，在RELEASE模式下直接验证
+    #if DEBUG
     try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+    #endif
     
     let updatedReport = monitor.getPerformanceReport()
     
     // 验证数据可能已更新（或至少监控系统在运行）
     #expect(updatedReport.averageMemoryUsage >= 0)
     #expect(updatedReport.averageCPUUsage >= 0)
+  }
+  
+  @Test("RELEASE模式性能监控简化测试")
+  func testReleaseModeSimplifiedMonitoring() {
+    let monitor = PerformanceMonitor.shared
+    
+    // 获取性能报告
+    let report = monitor.getPerformanceReport()
+    
+    #if DEBUG
+    // DEBUG模式下应该有详细的性能数据和可能的警告
+    #expect(report.averageMemoryUsage >= 0)
+    #expect(report.averageCPUUsage >= 0)
+    // 警告数量可能为0或更多，取决于当前性能状态
+    #expect(report.totalWarnings >= 0)
+    #else
+    // RELEASE模式下应该有基本的性能数据，但没有警告
+    #expect(report.averageMemoryUsage >= 0)
+    #expect(report.averageCPUUsage >= 0)
+    #expect(report.totalWarnings == 0) // Release模式下不应该有警告
+    #endif
+  }
+  
+  @Test("性能监控无权限要求测试")
+  func testPerformanceMonitoringNoPermissionRequirements() {
+    let monitor = PerformanceMonitor.shared
+    
+    // 验证性能监控不需要特殊权限
+    let memoryUsage = monitor.currentMemoryUsage
+    let cpuUsage = monitor.currentCPUUsage
+    
+    // 这些值应该可以获取到，不需要特殊权限
+    #expect(memoryUsage >= 0)
+    #expect(cpuUsage >= 0)
+    
+    // 验证性能报告可以生成
+    let report = monitor.getPerformanceReport()
+    #expect(report.averageMemoryUsage >= 0)
+    #expect(report.averageCPUUsage >= 0)
+    
+    // 验证最近指标获取不需要权限
+    let recentMetrics = monitor.getRecentMetrics(count: 5)
+    #expect(recentMetrics.count >= 0)
   }
 }
 

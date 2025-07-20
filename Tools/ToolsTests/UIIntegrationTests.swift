@@ -109,7 +109,6 @@ struct UIIntegrationTests {
     let errors: [ToolError] = [
       .invalidInput("无效输入"),
       .processingFailed("处理失败"),
-      .fileAccessDenied,
       .networkError(NSError(domain: "TestDomain", code: -1, userInfo: nil)),
       .unsupportedFormat
     ]
@@ -137,8 +136,7 @@ struct UIIntegrationTests {
     // 测试不可重试的错误
     let nonRetryableErrors: [ToolError] = [
       .invalidInput("格式错误"),
-      .unsupportedFormat,
-      .fileAccessDenied
+      .unsupportedFormat
     ]
     
     for error in nonRetryableErrors {

@@ -33,8 +33,8 @@ struct ErrorHandlingTests {
     let timeoutError = ToolError.timeout
     #expect(timeoutError.recoverySuggestion == "请稍后重试")
     
-    let permissionError = ToolError.permissionDenied("文件访问")
-    #expect(permissionError.recoverySuggestion == "请检查应用权限设置")
+    let fileNotFoundError = ToolError.fileNotFound("test.txt")
+    #expect(fileNotFoundError.recoverySuggestion == "请检查文件路径是否正确")
   }
   
   @Test("ToolError 重试能力测试")
@@ -281,13 +281,12 @@ struct ErrorHandlingTests {
     let errorsWithSuggestions: [ToolError] = [
       .emptyInput,
       .invalidInput("test"),
-      .fileAccessDenied,
       .fileTooLarge(1000),
       .diskSpaceFull,
       .noInternetConnection,
       .timeout,
       .operationCancelled,
-      .permissionDenied("test")
+      .fileNotFound("test")
     ]
     
     for error in errorsWithSuggestions {

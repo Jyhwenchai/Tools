@@ -164,7 +164,6 @@ struct AccessibilityTests {
     let errors: [ToolError] = [
       .invalidInput("输入格式不正确"),
       .processingFailed("处理过程中发生错误"),
-      .fileAccessDenied,
       .networkError(NSError(domain: "TestDomain", code: -1, userInfo: nil)),
       .unsupportedFormat,
       .timeout,
@@ -188,8 +187,6 @@ struct AccessibilityTests {
         #expect(description.contains("输入") || description.contains(message))
       case .processingFailed(let message):
         #expect(description.contains("处理") || description.contains("失败") || description.contains(message))
-      case .fileAccessDenied:
-        #expect(description.contains("文件") || description.contains("访问") || description.contains("拒绝"))
       case .networkError:
         #expect(description.contains("网络") || description.contains("错误"))
       case .unsupportedFormat:

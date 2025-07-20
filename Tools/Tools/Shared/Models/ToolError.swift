@@ -20,7 +20,6 @@ enum ToolError: LocalizedError, Equatable {
   case timeout
   
   // File system errors
-  case fileAccessDenied
   case fileNotFound(String)
   case fileTooLarge(Int64)
   case diskSpaceFull
@@ -56,7 +55,6 @@ enum ToolError: LocalizedError, Equatable {
   case clipboardDataCorrupted
   
   // System errors
-  case permissionDenied(String)
   case systemResourceUnavailable
   case unknown(String)
 
@@ -81,8 +79,6 @@ enum ToolError: LocalizedError, Equatable {
       return "操作超时"
       
     // File system errors
-    case .fileAccessDenied:
-      return "文件访问被拒绝"
     case let .fileNotFound(filename):
       return "文件未找到: \(filename)"
     case let .fileTooLarge(size):
@@ -137,8 +133,6 @@ enum ToolError: LocalizedError, Equatable {
       return "粘贴板数据损坏"
       
     // System errors
-    case let .permissionDenied(resource):
-      return "权限被拒绝: \(resource)"
     case .systemResourceUnavailable:
       return "系统资源不可用"
     case let .unknown(message):
@@ -152,8 +146,6 @@ enum ToolError: LocalizedError, Equatable {
       return "请输入有效内容后重试"
     case .invalidInput, .invalidFormat:
       return "请检查输入格式是否正确"
-    case .fileAccessDenied, .permissionDenied:
-      return "请检查应用权限设置"
     case .fileTooLarge:
       return "请选择较小的文件"
     case .diskSpaceFull:
@@ -200,8 +192,6 @@ enum ToolError: LocalizedError, Equatable {
       return true
     case (.timeout, .timeout):
       return true
-    case (.fileAccessDenied, .fileAccessDenied):
-      return true
     case (.fileNotFound(let a), .fileNotFound(let b)):
       return a == b
     case (.fileTooLarge(let a), .fileTooLarge(let b)):
@@ -238,8 +228,6 @@ enum ToolError: LocalizedError, Equatable {
       return true
     case (.clipboardDataCorrupted, .clipboardDataCorrupted):
       return true
-    case (.permissionDenied(let a), .permissionDenied(let b)):
-      return a == b
     case (.systemResourceUnavailable, .systemResourceUnavailable):
       return true
     case (.unknown(let a), .unknown(let b)):

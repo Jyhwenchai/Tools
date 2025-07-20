@@ -134,10 +134,30 @@ class ErrorLoggingService {
     }
   }
   
-  /// Initialize the service (call on app startup)
-  func initialize() {
-    loadFromPersistentStorage()
-    logger.info("ErrorLoggingService initialized with \(self.errorHistory.count) historical entries")
+  /// Initialize the service (call on app startup) - optimized for startup performance
+  func initialize() async {
+    // Load from persistent storage in background to avoid blocking startup
+    await Task.detached(priority: .utility) {
+      await self.loadFromPersistentStorageAsync()
+      await MainActor.run {
+        self.logger.info("ErrorLoggingService initialized with \(self.errorHistory.count) historical entries")
+      }
+    }.value
+  }
+  
+  private func loadFromPersistentStorageAsync() async {
+    do {
+      let data = try Data(contentsOf: storageURL)
+      let history = try JSONDecoder().decode([ErrorLogEntry].self, from: data)
+      await MainActor.run {
+        self.errorHistory = history
+      }
+    } catch {
+      // File doesn't exist or is corrupted, start fresh
+      await MainActor.run {
+        self.errorHistory = []
+      }
+    }
   }
 }
 

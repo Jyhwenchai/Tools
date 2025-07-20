@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct JSONView: View {
   @State private var inputJSON: String = ""
@@ -19,6 +20,7 @@ struct JSONView: View {
   @State private var showingJSONPath: Bool = false
   @State private var extractedPaths: [String] = []
   @State private var selectedOperation: JSONOperation = .format
+  @State private var showingFilePicker: Bool = false
   
   private let jsonService = JSONService.shared
   
@@ -42,11 +44,22 @@ struct JSONView: View {
             .foregroundStyle(.blue)
           }
           
-          ToolTextField(
-            title: "JSON内容",
-            text: $inputJSON,
-            placeholder: "输入或粘贴JSON内容，或点击'示例JSON'加载测试数据..."
-          )
+          if inputJSON.isEmpty {
+            EnhancedDropZone.forJSON(
+              onFilesDropped: { urls in
+                loadJSONFromFile(urls.first)
+              },
+              onButtonTapped: {
+                showingFilePicker = true
+              }
+            )
+          } else {
+            ToolTextField(
+              title: "JSON内容",
+              text: $inputJSON,
+              placeholder: "输入或粘贴JSON内容，或点击'示例JSON'加载测试数据..."
+            )
+          }
           
           // 实时验证状态和统计信息
           HStack {
@@ -194,6 +207,18 @@ struct JSONView: View {
     .padding(24)
     .navigationTitle("JSON工具")
     .errorAlert($currentError)
+    .fileImporter(
+      isPresented: $showingFilePicker,
+      allowedContentTypes: [.json, .plainText],
+      allowsMultipleSelection: false
+    ) { result in
+      switch result {
+      case .success(let urls):
+        loadJSONFromFile(urls.first)
+      case .failure(let error):
+        currentError = .unknown(error.localizedDescription)
+      }
+    }
     .onChange(of: inputJSON) { _, newValue in
       validateJSONInput(newValue)
     }
@@ -299,6 +324,31 @@ struct JSONView: View {
   }
 }
 """
+  }
+  
+  private func loadJSONFromFile(_ url: URL?) {
+    guard let url = url else { return }
+    
+    Task {
+      do {
+        // Validate file size (max 10MB for JSON)
+        if !FileDialogUtils.validateFileSize(url, maxSize: 10 * 1024 * 1024) {
+          await MainActor.run {
+            currentError = .fileTooLarge(10 * 1024 * 1024)
+          }
+          return
+        }
+        
+        let content = try String(contentsOf: url, encoding: .utf8)
+        await MainActor.run {
+          inputJSON = content
+        }
+      } catch {
+        await MainActor.run {
+          currentError = .fileNotFound(url.lastPathComponent)
+        }
+      }
+    }
   }
   
   private func clearAll() {

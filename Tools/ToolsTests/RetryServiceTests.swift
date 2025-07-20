@@ -247,7 +247,7 @@ struct RetryServiceTests {
     let result = try await service.retryFileOperation {
       attemptCount += 1
       if attemptCount < 2 {
-        throw ToolError.fileAccessDenied
+        throw ToolError.systemResourceUnavailable
       }
       return "文件操作成功"
     }

@@ -5,7 +5,6 @@ struct SettingsView: View {
   @State private var showingResetAlert = false
   @State private var showingImportExport = false
   @State private var showingPrivacyPolicy = false
-  private let securityService = SecurityService.shared
   
   var body: some View {
     NavigationView {
@@ -138,8 +137,8 @@ struct SettingsView: View {
           }
         }
         
-        // MARK: - Security Section
-        Section("安全与隐私") {
+        // MARK: - Privacy Section
+        Section("隐私") {
           Button(action: { showingPrivacyPolicy = true }) {
             HStack {
               Image(systemName: "hand.raised")
@@ -153,20 +152,6 @@ struct SettingsView: View {
               Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundColor(.secondary)
-            }
-          }
-          .buttonStyle(.plain)
-          
-          Button(action: { clearSensitiveData() }) {
-            HStack {
-              Image(systemName: "trash.slash")
-                .foregroundColor(.orange)
-                .frame(width: 20)
-              
-              Text("清理敏感数据")
-                .foregroundColor(.orange)
-              
-              Spacer()
             }
           }
           .buttonStyle(.plain)
@@ -227,10 +212,8 @@ struct SettingsView: View {
   }
   
   // MARK: - Helper Methods
-  
-  private func clearSensitiveData() {
-    securityService.clearSensitiveData()
-  }
+  // Note: Sensitive data clearing is now handled automatically by SecurityService
+  // when the app becomes inactive or terminates
 }
 
 // MARK: - Import/Export Settings View

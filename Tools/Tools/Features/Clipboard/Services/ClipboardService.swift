@@ -17,6 +17,8 @@ class ClipboardService {
   var clipboardHistory: [ClipboardItem] = []
   var isMonitoring: Bool = false
   
+
+  
   // MARK: - Initialization
   init(modelContext: ModelContext, maxHistoryCount: Int = 100) {
     self.modelContext = modelContext
@@ -76,20 +78,28 @@ class ClipboardService {
   
   private func resumeMonitoring() {
     if wasMonitoringBeforePause {
-      startMonitoring()
+      Task {
+        await startMonitoring()
+      }
     }
   }
   
+
+  
   // MARK: - Monitoring Control
-  func startMonitoring() {
+  func startMonitoring() async {
     guard !isMonitoring else { return }
     
     isMonitoring = true
     lastChangeCount = pasteboard.changeCount
     
     monitoringTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-      self?.checkForClipboardChanges()
+      Task { @MainActor in
+        self?.checkForClipboardChanges()
+      }
     }
+    
+    print("🎯 Clipboard monitoring started")
   }
   
   func stopMonitoring() {

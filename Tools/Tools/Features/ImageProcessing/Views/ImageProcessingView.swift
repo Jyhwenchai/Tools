@@ -119,45 +119,18 @@ struct ImageProcessingView: View {
     }
     
     private var enhancedDropZoneView: some View {
-        BrightCardView {
-            VStack(spacing: 20) {
-                Image(systemName: isDragOver ? "photo.badge.plus" : "photo.on.rectangle.angled")
-                    .font(.system(size: 48))
-                    .foregroundColor(isDragOver ? .accentColor : .secondary)
-                    .animation(.easeInOut(duration: 0.2), value: isDragOver)
-                
-                VStack(spacing: 8) {
-                    Text(isDragOver ? "释放以添加图片" : "拖拽图片到此处或点击选择")
-                        .font(.headline)
-                        .foregroundColor(isDragOver ? .accentColor : .primary)
-                    
-                    Text("支持 PNG, JPEG, GIF, TIFF, BMP 等格式，支持批量处理")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
+        VStack(spacing: 16) {
+            EnhancedDropZone.forImages(
+                onFilesDropped: { urls in
+                    selectedImages.append(contentsOf: urls)
+                },
+                onButtonTapped: {
+                    showingFilePicker = true
                 }
-                
-                HStack(spacing: 12) {
-                    ToolButton(title: "选择图片", action: {
-                        showingFilePicker = true
-                    }, style: .primary)
-                    
-                    ToolButton(title: "选择文件夹", action: {
-                        selectImageFolder()
-                    }, style: .secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: 200)
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(
-                    isDragOver ? Color.accentColor : Color.clear,
-                    style: StrokeStyle(lineWidth: 2, dash: [8])
-                )
-        )
-        .onDrop(of: [.image, .fileURL], isTargeted: $isDragOver) { providers in
-            handleEnhancedDrop(providers)
+            )
+            
+            // Operation guide
+            FileOperationGuide(operationType: .dragDrop)
         }
     }
     
@@ -594,11 +567,21 @@ struct ImageProcessingView: View {
     private func handleFileSelection(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
+            let supportedTypes: [UTType] = [.png, .jpeg, .gif, .tiff, .bmp, .heic, .webP]
             let imageURLs = urls.filter { url in
-                let supportedTypes = ["png", "jpg", "jpeg", "gif", "tiff", "bmp", "heic"]
-                return supportedTypes.contains(url.pathExtension.lowercased())
+                FileDialogUtils.isFileTypeSupported(url, supportedTypes: supportedTypes)
             }
-            selectedImages.append(contentsOf: imageURLs)
+            
+            // Validate file sizes
+            let validImageURLs = imageURLs.filter { url in
+                FileDialogUtils.validateFileSize(url, maxSize: 100 * 1024 * 1024) // 100MB
+            }
+            
+            if validImageURLs.count < imageURLs.count {
+                service.errorMessage = "某些文件过大，已被跳过。单个文件大小限制为100MB。"
+            }
+            
+            selectedImages.append(contentsOf: validImageURLs)
         case .failure(let error):
             service.errorMessage = error.localizedDescription
         }
@@ -623,7 +606,13 @@ struct ImageProcessingView: View {
                 _ = provider.loadObject(ofClass: URL.self) { url, _ in
                     if let url = url {
                         DispatchQueue.main.async {
-                            loadImagesFromFolder(url)
+                            // Only add individual image files, not folders
+                            let supportedTypes = ["png", "jpg", "jpeg", "gif", "tiff", "bmp", "heic"]
+                            if supportedTypes.contains(url.pathExtension.lowercased()) {
+                                if !selectedImages.contains(url) {
+                                    selectedImages.append(url)
+                                }
+                            }
                         }
                     }
                 }
@@ -634,29 +623,9 @@ struct ImageProcessingView: View {
         return hasValidImages
     }
     
-    private func selectImageFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        
-        if panel.runModal() == .OK, let url = panel.url {
-            loadImagesFromFolder(url)
-        }
-    }
+
     
-    private func loadImagesFromFolder(_ folderURL: URL) {
-        do {
-            let contents = try FileManager.default.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: nil)
-            let imageURLs = contents.filter { url in
-                let supportedTypes = ["png", "jpg", "jpeg", "gif", "tiff", "bmp", "heic"]
-                return supportedTypes.contains(url.pathExtension.lowercased())
-            }
-            selectedImages.append(contentsOf: imageURLs)
-        } catch {
-            service.errorMessage = "无法读取文件夹内容: \(error.localizedDescription)"
-        }
-    }
+
     
     private func removeImage(_ url: URL) {
         selectedImages.removeAll { $0 == url }
@@ -691,42 +660,64 @@ struct ImageProcessingView: View {
     private func saveResult(_ result: ProcessingResult) {
         guard result.success, let processedImage = result.processedImage else { return }
         
-        let savePanel = NSSavePanel()
-        savePanel.allowedContentTypes = [.png, .jpeg]
-        savePanel.nameFieldStringValue = result.originalURL.deletingPathExtension().lastPathComponent + "_processed"
-        
-        if savePanel.runModal() == .OK, let saveURL = savePanel.url {
-            if let data = service.convertImage(processedImage, to: selectedFormatType.imageFormat) {
-                do {
-                    try data.write(to: saveURL)
-                } catch {
-                    service.errorMessage = "保存失败: \(error.localizedDescription)"
+        Task {
+            let suggestedName = result.originalURL.deletingPathExtension().lastPathComponent + "_processed"
+            let allowedTypes: [UTType] = [.png, .jpeg, .gif, .tiff]
+            let message = "选择保存位置和文件格式"
+            
+            if let saveURL = await FileDialogUtils.showEnhancedSaveDialog(
+                suggestedName: suggestedName,
+                allowedTypes: allowedTypes,
+                message: message
+            ) {
+                if let data = service.convertImage(processedImage, to: selectedFormatType.imageFormat) {
+                    do {
+                        try data.write(to: saveURL)
+                        
+                        // Show success feedback
+                        await MainActor.run {
+                            // Could add a success toast here
+                        }
+                    } catch {
+                        await MainActor.run {
+                            service.errorMessage = "保存失败: \(error.localizedDescription)"
+                        }
+                    }
                 }
             }
         }
     }
     
     private func saveAllResults() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.prompt = "选择保存位置"
-        
-        if panel.runModal() == .OK, let folderURL = panel.url {
-            let successfulResults = processedResults.filter(\.success)
-            
-            for result in successfulResults {
-                guard let processedImage = result.processedImage else { continue }
+        Task {
+            let message = "选择文件夹来保存所有处理后的图片"
+            if let folderURL = await FileDialogUtils.showDirectoryDialog(message: message) {
+                let successfulResults = processedResults.filter(\.success)
+                var savedCount = 0
                 
-                let fileName = result.originalURL.deletingPathExtension().lastPathComponent + "_processed." + selectedFormatType.imageFormat.fileExtension
-                let saveURL = folderURL.appendingPathComponent(fileName)
+                for result in successfulResults {
+                    guard let processedImage = result.processedImage else { continue }
+                    
+                    let fileName = result.originalURL.deletingPathExtension().lastPathComponent + "_processed." + selectedFormatType.imageFormat.fileExtension
+                    let saveURL = folderURL.appendingPathComponent(fileName)
+                    
+                    if let data = service.convertImage(processedImage, to: selectedFormatType.imageFormat) {
+                        do {
+                            try data.write(to: saveURL)
+                            savedCount += 1
+                        } catch {
+                            await MainActor.run {
+                                service.errorMessage = "保存 \(fileName) 失败: \(error.localizedDescription)"
+                            }
+                            break
+                        }
+                    }
+                }
                 
-                if let data = service.convertImage(processedImage, to: selectedFormatType.imageFormat) {
-                    do {
-                        try data.write(to: saveURL)
-                    } catch {
-                        service.errorMessage = "保存 \(fileName) 失败: \(error.localizedDescription)"
+                // Show completion feedback
+                await MainActor.run {
+                    if savedCount == successfulResults.count {
+                        // Could add a success toast: "成功保存 \(savedCount) 个文件"
                     }
                 }
             }

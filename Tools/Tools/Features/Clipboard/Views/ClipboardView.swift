@@ -70,7 +70,9 @@ struct ClipboardView: View {
             if service.isMonitoring {
               service.stopMonitoring()
             } else {
-              service.startMonitoring()
+              Task {
+                await service.startMonitoring()
+              }
             }
           }) {
             HStack(spacing: 6) {
@@ -173,6 +175,8 @@ struct ClipboardView: View {
     .background(Color(NSColor.controlBackgroundColor))
   }
   
+
+  
   // MARK: - Empty State View
   private var emptyStateView: some View {
     VStack(spacing: 16) {
@@ -198,7 +202,9 @@ struct ClipboardView: View {
       
       if let service = clipboardService, !service.isMonitoring && searchText.isEmpty && selectedType == nil {
         Button("开始监控") {
-          service.startMonitoring()
+          Task {
+            await service.startMonitoring()
+          }
         }
         .buttonStyle(.borderedProminent)
       }
@@ -232,8 +238,12 @@ struct ClipboardView: View {
   // MARK: - Helper Methods
   private func setupClipboardService() {
     clipboardService = ClipboardService(modelContext: modelContext)
-    clipboardService?.startMonitoring()
     updateFilteredItems()
+    
+    // Start monitoring asynchronously
+    Task {
+      await clipboardService?.startMonitoring()
+    }
   }
   
   private func updateFilteredItems() {

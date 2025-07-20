@@ -10,9 +10,10 @@ import SwiftData
 
 @main
 struct ToolsApp: App {
-  private let securityService = SecurityService.shared
-  private let performanceMonitor = PerformanceMonitor.shared
-  private let errorLoggingService = ErrorLoggingService.shared
+  // Lazy initialization to improve startup performance
+  private lazy var securityService = SecurityService.shared
+  private lazy var performanceMonitor = PerformanceMonitor.shared
+  private lazy var errorLoggingService = ErrorLoggingService.shared
   
   // SwiftData model container
   var sharedModelContainer: ModelContainer = {
@@ -36,7 +37,7 @@ struct ToolsApp: App {
         .withErrorHandling()
         .withPerformanceMonitoring(identifier: "MainApp")
         .task {
-          await initializeApp()
+          await initializeAppLazily()
         }
         .onReceive(NotificationCenter.default.publisher(for: .performanceOptimizationNeeded)) { _ in
           handlePerformanceOptimization()
@@ -46,24 +47,23 @@ struct ToolsApp: App {
     .windowToolbarStyle(.unified)
   }
   
-  // MARK: - App Initialization
-  private func initializeApp() async {
-    // Initialize error logging
-    errorLoggingService.initialize()
-    
-    // Request permissions
-    let permissionsGranted = await securityService.requestRequiredPermissions()
-    if !permissionsGranted {
-      errorLoggingService.logError(
-        .permissionDenied("系统权限"),
-        context: "App启动"
-      )
+  // MARK: - App Initialization (Optimized for Startup Performance)
+  private func initializeAppLazily() async {
+    // Defer heavy initialization to background queue to improve startup time
+    Task.detached(priority: .background) {
+      // Initialize error logging in background
+      await self.errorLoggingService.initialize()
+      
+      // Start performance monitoring in background (DEBUG mode only)
+      #if DEBUG
+      await self.performanceMonitor.startPerformanceMonitoring()
+      #endif
+      
+      print("✅ App background initialization completed")
     }
     
-    // Start performance monitoring
-    performanceMonitor.startPerformanceMonitoring()
-    
-    print("✅ App initialized successfully")
+    // Only essential initialization on main thread
+    print("🚀 App startup completed - background services initializing...")
   }
   
   // MARK: - Performance Optimization

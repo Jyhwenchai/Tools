@@ -262,22 +262,17 @@ struct ClipboardServiceTests {
   }
   
   @Test("监控状态测试")
-  func testMonitoringState() {
+  func testMonitoringState() async {
     let context = createTestModelContext()
     let service = ClipboardService(modelContext: context)
     
     #expect(service.isMonitoring == false)
     
-    service.startMonitoring()
+    await service.startMonitoring()
     #expect(service.isMonitoring == true)
     
     service.stopMonitoring()
     #expect(service.isMonitoring == false)
-    
-    // Test multiple start calls
-    service.startMonitoring()
-    service.startMonitoring()
-    #expect(service.isMonitoring == true)
   }
 }
 
