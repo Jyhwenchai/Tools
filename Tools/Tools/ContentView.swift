@@ -8,121 +8,121 @@
 import SwiftUI
 
 struct ContentView: View {
-//  @State private var navigationManager = NavigationManager()
-//  @State private var settings = AppSettings.shared
-//  @State private var isInitialized = false
-//  @State private var stabilityMonitor = ApplicationStabilityMonitor.shared
-//
-//  #if DEBUG
-//    @State private var performanceMonitor: PerformanceMonitor?
-//    @State private var showPerformanceAlert = false
-//  #endif
+  @State private var navigationManager = NavigationManager()
+  @State private var settings = AppSettings.shared
+  @State private var isInitialized = false
+  @State private var stabilityMonitor = ApplicationStabilityMonitor.shared
+
+  #if DEBUG
+    @State private var performanceMonitor: PerformanceMonitor?
+    @State private var showPerformanceAlert = false
+  #endif
 
   var body: some View {
     NavigationSplitView {
-//      SidebarView(selection: $navigationManager.selectedTool)
-//        .navigationSplitViewColumnWidth(240)
+      SidebarView(selection: $navigationManager.selectedTool)
+        .navigationSplitViewColumnWidth(240)
     } detail: {
-//      ToolDetailView(tool: navigationManager.selectedTool)
-//        .navigationSplitViewColumnWidth(min: 600, ideal: 800)
+      ToolDetailView(tool: navigationManager.selectedTool)
+        .navigationSplitViewColumnWidth(min: 600, ideal: 800)
     }
-//    .navigationSplitViewStyle(.balanced)
-//    .preferredColorScheme(settings.theme.colorScheme)
-//    .task {
-//      await initializeContentView()
-//    }
-//    .withStabilityMonitoring()
-//    #if DEBUG
-//      .overlay(alignment: .topTrailing) {
-//        performanceIndicator
-//      }
-//      .alert("性能警告", isPresented: $showPerformanceAlert) {
-//        Button("确定") {
-//          showPerformanceAlert = false
-//        }
-//        Button("优化") {
-//          optimizePerformance()
-//          showPerformanceAlert = false
-//        }
-//      } message: {
-//        Text(performanceWarningMessage)
-//      }
-//      .onChange(of: performanceMonitor?.performanceWarnings ?? []) { _, warnings in
-//        if !warnings.isEmpty, !showPerformanceAlert {
-//          showPerformanceAlert = true
-//        }
-//      }
-//    #endif
+    .navigationSplitViewStyle(.balanced)
+    .preferredColorScheme(settings.theme.colorScheme)
+    .task {
+      await initializeContentView()
+    }
+    .withStabilityMonitoring()
+    #if DEBUG
+      .overlay(alignment: .topTrailing) {
+        performanceIndicator
+      }
+      .alert("性能警告", isPresented: $showPerformanceAlert) {
+        Button("确定") {
+          showPerformanceAlert = false
+        }
+        Button("优化") {
+          optimizePerformance()
+          showPerformanceAlert = false
+        }
+      } message: {
+        Text(performanceWarningMessage)
+      }
+      .onChange(of: performanceMonitor?.performanceWarnings ?? []) { _, warnings in
+        if !warnings.isEmpty, !showPerformanceAlert {
+          showPerformanceAlert = true
+        }
+      }
+    #endif
   }
 
   // MARK: - Lazy Initialization
 
-//  private func initializeContentView() async {
-//    guard !isInitialized else { return }
-//
-//    // Initialize stability monitor
-//    _ = stabilityMonitor.getStabilityReport()
-//
-//    // Delay performance monitor initialization to improve startup
-//    #if DEBUG
-//      await Task.detached(priority: .background) {
-//        await MainActor.run {
-//          performanceMonitor = PerformanceMonitor.shared
-//        }
-//      }.value
-//    #endif
-//
-//    // Check for memory pressure
-//    if stabilityMonitor.isMemoryPressureDetected {
-//      // Trigger memory optimization
-//      NotificationCenter.default.post(name: .applicationMemoryOptimizationNeeded, object: nil)
-//    }
-//
-//    isInitialized = true
-//  }
-//
-//  // MARK: - Performance Indicator (DEBUG Only)
-//
-//  #if DEBUG
-//    @ViewBuilder
-//    private var performanceIndicator: some View {
-//      if let monitor = performanceMonitor, !monitor.isPerformanceOptimal {
-//        HStack(spacing: 8) {
-//          Image(systemName: "exclamationmark.triangle.fill")
-//            .foregroundColor(.orange)
-//
-//          Text("性能")
-//            .font(.caption)
-//            .fontWeight(.medium)
-//        }
-//        .padding(.horizontal, 8)
-//        .padding(.vertical, 4)
-//        .background(.regularMaterial)
-//        .cornerRadius(8)
-//        .padding()
-//        .onTapGesture {
-//          showPerformanceAlert = true
-//        }
-//      }
-//    }
-//
-//    private var performanceWarningMessage: String {
-//      guard let monitor = performanceMonitor else {
-//        return "性能监控初始化中..."
-//      }
-//
-//      let warnings = monitor.performanceWarnings
-//      if warnings.isEmpty {
-//        return "应用性能正常"
-//      }
-//
-//      return warnings.map(\.description).joined(separator: "\n")
-//    }
-//
-//    private func optimizePerformance() {
-//      NotificationCenter.default.post(name: .performanceOptimizationNeeded, object: nil)
-//    }
-//  #endif
+  private func initializeContentView() async {
+    guard !isInitialized else { return }
+
+    // Initialize stability monitor
+    _ = stabilityMonitor.getStabilityReport()
+
+    // Delay performance monitor initialization to improve startup
+    #if DEBUG
+      await Task.detached(priority: .background) {
+        await MainActor.run {
+          performanceMonitor = PerformanceMonitor.shared
+        }
+      }.value
+    #endif
+
+    // Check for memory pressure
+    if stabilityMonitor.isMemoryPressureDetected {
+      // Trigger memory optimization
+      NotificationCenter.default.post(name: .applicationMemoryOptimizationNeeded, object: nil)
+    }
+
+    isInitialized = true
+  }
+
+  // MARK: - Performance Indicator (DEBUG Only)
+
+  #if DEBUG
+    @ViewBuilder
+    private var performanceIndicator: some View {
+      if let monitor = performanceMonitor, !monitor.isPerformanceOptimal {
+        HStack(spacing: 8) {
+          Image(systemName: "exclamationmark.triangle.fill")
+            .foregroundColor(.orange)
+
+          Text("性能")
+            .font(.caption)
+            .fontWeight(.medium)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.regularMaterial)
+        .cornerRadius(8)
+        .padding()
+        .onTapGesture {
+          showPerformanceAlert = true
+        }
+      }
+    }
+
+    private var performanceWarningMessage: String {
+      guard let monitor = performanceMonitor else {
+        return "性能监控初始化中..."
+      }
+
+      let warnings = monitor.performanceWarnings
+      if warnings.isEmpty {
+        return "应用性能正常"
+      }
+
+      return warnings.map(\.description).joined(separator: "\n")
+    }
+
+    private func optimizePerformance() {
+      NotificationCenter.default.post(name: .performanceOptimizationNeeded, object: nil)
+    }
+  #endif
 }
 
 struct SidebarView: View {

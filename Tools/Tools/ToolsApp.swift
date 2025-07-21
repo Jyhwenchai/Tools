@@ -26,16 +26,15 @@ struct ToolsApp: App {
 
   var body: some Scene {
     WindowGroup {
-//      ContentView()
-//        .modelContainer(sharedModelContainer)
-//        .preferredColorScheme(AppSettings.shared.theme.colorScheme)
-//        .task {
-//          await initializeAppLazily()
-//        }
-//        .onReceive(NotificationCenter.default.publisher(for: .performanceOptimizationNeeded)) { _ in
-//          handlePerformanceOptimization()
-//        }
-      EmptyView()
+      ContentView()
+        .modelContainer(sharedModelContainer)
+        .preferredColorScheme(AppSettings.shared.theme.colorScheme)
+        .task {
+          await initializeAppLazily()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .performanceOptimizationNeeded)) { _ in
+          handlePerformanceOptimization()
+        }
     }
     .windowResizability(.contentSize)
     .windowToolbarStyle(.unified)
