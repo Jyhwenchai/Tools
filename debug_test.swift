@@ -3,18 +3,18 @@ import Foundation
 // 复制JSONService的相关代码来调试
 class JSONService {
   static let shared = JSONService()
-  
+
   private init() {}
-  
+
   func validateJSON(_ jsonString: String) -> (isValid: Bool, errorMessage: String?) {
     guard !jsonString.isEmpty else {
       return (false, "JSON字符串不能为空")
     }
-    
+
     guard let data = jsonString.data(using: .utf8) else {
       return (false, "字符串编码失败")
     }
-    
+
     do {
       _ = try JSONSerialization.jsonObject(with: data, options: [])
       return (true, nil)
@@ -22,19 +22,22 @@ class JSONService {
       return (false, "JSON格式错误: \(error.localizedDescription)")
     }
   }
-  
-  func generateModelCode(_ jsonString: String, language: ProgrammingLanguage, className: String = "Model") throws -> String {
+
+  func generateModelCode(
+    _ jsonString: String,
+    language: ProgrammingLanguage,
+    className: String = "Model") throws -> String {
     guard !jsonString.isEmpty else {
       throw ToolError.invalidInput("JSON字符串不能为空")
     }
-    
+
     guard let data = jsonString.data(using: .utf8) else {
       throw ToolError.processingFailed("字符串编码失败")
     }
-    
+
     do {
       let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-      
+
       switch language {
       case .typescript:
         return try generateTypeScriptModel(from: jsonObject, className: className)
@@ -45,38 +48,38 @@ class JSONService {
       throw ToolError.invalidInput("JSON格式错误: \(error.localizedDescription)")
     }
   }
-  
+
   private func generateTypeScriptModel(from jsonObject: Any, className: String) throws -> String {
     guard let dictionary = jsonObject as? [String: Any] else {
       throw ToolError.processingFailed("JSON必须是对象类型才能生成模型")
     }
-    
+
     var code = "export interface \(className) {\n"
-    
+
     for (key, value) in dictionary.sorted(by: { $0.key < $1.key }) {
       let propertyName = key.camelCased
       let propertyType = typeScriptType(for: value)
       code += "  \(propertyName): \(propertyType);\n"
     }
-    
+
     code += "}\n"
     return code
   }
-  
+
   private func typeScriptType(for value: Any) -> String {
     switch value {
     case is String:
-      return "string"
+      "string"
     case is Int, is Double, is Float:
-      return "number"
+      "number"
     case is Bool:
-      return "boolean"
+      "boolean"
     case is [Any]:
-      return "any[]"
+      "any[]"
     case is [String: Any]:
-      return "Record<string, any>"
+      "Record<string, any>"
     default:
-      return "any"
+      "any"
     }
   }
 }
@@ -88,13 +91,13 @@ enum ProgrammingLanguage {
 enum ToolError: LocalizedError {
   case invalidInput(String)
   case processingFailed(String)
-  
+
   var errorDescription: String? {
     switch self {
     case let .invalidInput(message):
-      return "输入无效: \(message)"
+      "输入无效: \(message)"
     case let .processingFailed(message):
-      return "处理失败: \(message)"
+      "处理失败: \(message)"
     }
   }
 }
@@ -102,13 +105,13 @@ enum ToolError: LocalizedError {
 extension String {
   var camelCased: String {
     // If the string is already in camelCase, return as is
-    if self.first?.isLowercase == true && self.contains(where: { $0.isUppercase }) {
+    if self.first?.isLowercase == true, contains(where: \.isUppercase) {
       return self
     }
-    
-    let components = self.components(separatedBy: CharacterSet.alphanumerics.inverted)
+
+    let components = components(separatedBy: CharacterSet.alphanumerics.inverted)
     let first = components.first?.lowercased() ?? ""
-    let rest = components.dropFirst().map { $0.capitalized }
+    let rest = components.dropFirst().map(\.capitalized)
     return ([first] + rest).joined()
   }
 }
@@ -142,15 +145,15 @@ do {
   let code = try service.generateModelCode(json, language: .typescript, className: "User")
   print("Generated TypeScript code:")
   print(code)
-  
+
   // 检查期望的内容
   let expectedContents = [
     "export interface User",
     "name: string",
-    "age: number", 
+    "age: number",
     "isActive: boolean"
   ]
-  
+
   for expected in expectedContents {
     if code.contains(expected) {
       print("✓ Contains: \(expected)")

@@ -12,38 +12,38 @@ import UniformTypeIdentifiers
 struct FileOperationGuide: View {
   let operationType: OperationType
   @State private var showingGuide = false
-  
+
   enum OperationType {
     case dragDrop
     case fileSelection
     case fileSaving
     case batchProcessing
     case troubleshooting
-    
+
     var title: String {
       switch self {
-      case .dragDrop: return "拖拽文件操作指南"
-      case .fileSelection: return "文件选择指南"
-      case .fileSaving: return "文件保存指南"
-      case .batchProcessing: return "批量处理指南"
-      case .troubleshooting: return "常见问题解决"
+      case .dragDrop: "拖拽文件操作指南"
+      case .fileSelection: "文件选择指南"
+      case .fileSaving: "文件保存指南"
+      case .batchProcessing: "批量处理指南"
+      case .troubleshooting: "常见问题解决"
       }
     }
-    
+
     var icon: String {
       switch self {
-      case .dragDrop: return "hand.draw"
-      case .fileSelection: return "folder"
-      case .fileSaving: return "square.and.arrow.down"
-      case .batchProcessing: return "square.stack.3d.up"
-      case .troubleshooting: return "wrench.and.screwdriver"
+      case .dragDrop: "hand.draw"
+      case .fileSelection: "folder"
+      case .fileSaving: "square.and.arrow.down"
+      case .batchProcessing: "square.stack.3d.up"
+      case .troubleshooting: "wrench.and.screwdriver"
       }
     }
-    
+
     var tips: [String] {
       switch self {
       case .dragDrop:
-        return [
+        [
           "直接从访达拖拽文件到应用窗口的拖拽区域",
           "支持同时拖拽多个文件进行批量处理",
           "拖拽时会实时显示文件格式验证提示",
@@ -52,7 +52,7 @@ struct FileOperationGuide: View {
           "支持从不同文件夹同时拖拽多个文件"
         ]
       case .fileSelection:
-        return [
+        [
           "点击\"选择文件\"按钮打开系统原生文件选择器",
           "使用 ⌘+A 可以选择文件夹中的所有支持文件",
           "按住 ⌘ 键点击可以选择多个不连续的文件",
@@ -61,7 +61,7 @@ struct FileOperationGuide: View {
           "文件选择器会自动过滤只显示支持的文件格式"
         ]
       case .fileSaving:
-        return [
+        [
           "处理完成后点击保存按钮选择保存位置",
           "默认保存位置为桌面，便于快速查找",
           "可以在保存对话框中修改文件名和格式",
@@ -70,7 +70,7 @@ struct FileOperationGuide: View {
           "保存时会显示进度和成功提示"
         ]
       case .batchProcessing:
-        return [
+        [
           "一次可以处理多个文件，大幅提高工作效率",
           "所有文件将使用相同的处理设置和参数",
           "处理过程中会显示实时进度和当前状态",
@@ -79,7 +79,7 @@ struct FileOperationGuide: View {
           "大文件批量处理时请确保有足够的存储空间"
         ]
       case .troubleshooting:
-        return [
+        [
           "文件无法拖拽：检查文件格式是否受支持",
           "文件过大：压缩文件或分批处理",
           "处理失败：检查文件是否损坏或被其他程序占用",
@@ -90,7 +90,7 @@ struct FileOperationGuide: View {
       }
     }
   }
-  
+
   var body: some View {
     HStack(spacing: 8) {
       Button(action: {
@@ -115,7 +115,7 @@ struct FileOperationGuide: View {
       }
     }
   }
-  
+
   private var guideContent: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
@@ -125,25 +125,25 @@ struct FileOperationGuide: View {
             Circle()
               .fill(Color.accentColor.opacity(0.1))
               .frame(width: 40, height: 40)
-            
+
             Image(systemName: operationType.icon)
               .font(.title2)
               .foregroundColor(.accentColor)
           }
-          
+
           VStack(alignment: .leading, spacing: 2) {
             Text(operationType.title)
               .font(.headline)
               .fontWeight(.semibold)
-            
+
             Text("详细操作说明")
               .font(.caption)
               .foregroundColor(.secondary)
           }
         }
-        
+
         Divider()
-        
+
         // Enhanced tips with better visual hierarchy
         VStack(alignment: .leading, spacing: 12) {
           ForEach(Array(operationType.tips.enumerated()), id: \.offset) { index, tip in
@@ -152,13 +152,13 @@ struct FileOperationGuide: View {
                 Circle()
                   .fill(Color.accentColor.opacity(0.1))
                   .frame(width: 24, height: 24)
-                
+
                 Text("\(index + 1)")
                   .font(.caption)
                   .fontWeight(.bold)
                   .foregroundColor(.accentColor)
               }
-              
+
               Text(tip)
                 .font(.callout)
                 .fixedSize(horizontal: false, vertical: true)
@@ -166,11 +166,11 @@ struct FileOperationGuide: View {
             }
           }
         }
-        
+
         // Enhanced shortcuts section for file selection
         if operationType == .fileSelection {
           Divider()
-          
+
           VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
               Image(systemName: "keyboard")
@@ -180,7 +180,7 @@ struct FileOperationGuide: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
             }
-            
+
             VStack(alignment: .leading, spacing: 8) {
               shortcutRow("⌘ + A", "全选文件夹中的所有文件")
               shortcutRow("⌘ + 点击", "选择多个不连续的文件")
@@ -190,11 +190,11 @@ struct FileOperationGuide: View {
             }
           }
         }
-        
+
         // Enhanced performance tips for batch processing
         if operationType == .batchProcessing {
           Divider()
-          
+
           VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
               Image(systemName: "speedometer")
@@ -204,7 +204,7 @@ struct FileOperationGuide: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
             }
-            
+
             VStack(alignment: .leading, spacing: 6) {
               performanceTip("📊", "建议单次处理文件数量不超过50个")
               performanceTip("💾", "大文件处理时请确保有足够的存储空间")
@@ -213,7 +213,7 @@ struct FileOperationGuide: View {
             }
           }
         }
-        
+
         // Troubleshooting section for troubleshooting type
         if operationType == .troubleshooting {
           VStack(alignment: .leading, spacing: 12) {
@@ -225,7 +225,7 @@ struct FileOperationGuide: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
             }
-            
+
             Text("遇到问题时，请按照以上步骤逐一检查。如果问题仍然存在，请重启应用后重试。")
               .font(.caption)
               .foregroundColor(.secondary)
@@ -241,7 +241,7 @@ struct FileOperationGuide: View {
     .frame(width: 320)
     .frame(maxHeight: 400)
   }
-  
+
   private func shortcutRow(_ shortcut: String, _ description: String) -> some View {
     HStack(spacing: 12) {
       Text(shortcut)
@@ -252,20 +252,20 @@ struct FileOperationGuide: View {
         .background(Color.secondary.opacity(0.15))
         .cornerRadius(6)
         .frame(minWidth: 80, alignment: .center)
-      
+
       Text(description)
         .font(.caption)
         .foregroundColor(.primary)
-      
+
       Spacer()
     }
   }
-  
+
   private func performanceTip(_ icon: String, _ description: String) -> some View {
     HStack(alignment: .top, spacing: 8) {
       Text(icon)
         .font(.caption)
-      
+
       Text(description)
         .font(.caption)
         .foregroundColor(.secondary)
@@ -282,14 +282,14 @@ struct FileOperationQuickGuide: View {
         Image(systemName: "info.circle.fill")
           .font(.caption)
           .foregroundColor(.accentColor)
-        
+
         Text("文件操作帮助")
           .font(.subheadline)
           .fontWeight(.semibold)
-        
+
         Spacer()
       }
-      
+
       HStack(spacing: 12) {
         FileOperationGuide(operationType: .dragDrop)
         FileOperationGuide(operationType: .fileSelection)
@@ -309,26 +309,28 @@ struct ContextualFileOperationHelp: View {
   let supportedTypes: [UTType]
   let maxFileSize: Int64
   let allowsMultiple: Bool
-  
+
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
         Image(systemName: "lightbulb")
           .font(.caption)
           .foregroundColor(.yellow)
-        
+
         Text("操作提示")
           .font(.subheadline)
           .fontWeight(.semibold)
       }
-      
+
       VStack(alignment: .leading, spacing: 8) {
         if allowsMultiple {
           helpTip("📁", "支持同时处理多个文件，提高工作效率")
         }
-        
+
         helpTip("🎯", "支持格式：\(formatTypes())")
-        helpTip("📏", "文件大小限制：\(ByteCountFormatter.string(fromByteCount: maxFileSize, countStyle: .file))")
+        helpTip(
+          "📏",
+          "文件大小限制：\(ByteCountFormatter.string(fromByteCount: maxFileSize, countStyle: .file))")
         helpTip("🚀", "拖拽文件到区域或点击按钮选择文件")
       }
     }
@@ -336,24 +338,24 @@ struct ContextualFileOperationHelp: View {
     .background(Color.yellow.opacity(0.05))
     .cornerRadius(8)
   }
-  
+
   private func helpTip(_ icon: String, _ text: String) -> some View {
     HStack(alignment: .top, spacing: 8) {
       Text(icon)
         .font(.caption)
-      
+
       Text(text)
         .font(.caption)
         .foregroundColor(.secondary)
         .fixedSize(horizontal: false, vertical: true)
     }
   }
-  
+
   private func formatTypes() -> String {
     let extensions = supportedTypes.compactMap { type in
       type.preferredFilenameExtension?.uppercased()
     }
-    
+
     if extensions.count <= 3 {
       return extensions.joined(separator: ", ")
     } else {
@@ -369,9 +371,9 @@ struct ContextualFileOperationHelp: View {
     FileOperationGuide(operationType: .fileSelection)
     FileOperationGuide(operationType: .fileSaving)
     FileOperationGuide(operationType: .batchProcessing)
-    
+
     Divider()
-    
+
     FileOperationQuickGuide()
   }
   .padding()

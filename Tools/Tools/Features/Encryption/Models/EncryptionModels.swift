@@ -13,30 +13,30 @@ enum EncryptionAlgorithm: String, CaseIterable, Identifiable {
   case sha256 = "SHA256"
   case base64 = "Base64"
   case aes = "AES"
-  
+
   var id: String { rawValue }
-  
+
   var supportsDecryption: Bool {
     switch self {
     case .md5, .sha1, .sha256:
-      return false // 哈希算法是单向的
+      false // 哈希算法是单向的
     case .base64, .aes:
-      return true
+      true
     }
   }
-  
+
   var description: String {
     switch self {
     case .md5:
-      return "MD5 哈希算法"
+      "MD5 哈希算法"
     case .sha1:
-      return "SHA1 哈希算法"
+      "SHA1 哈希算法"
     case .sha256:
-      return "SHA256 哈希算法"
+      "SHA256 哈希算法"
     case .base64:
-      return "Base64 编码/解码"
+      "Base64 编码/解码"
     case .aes:
-      return "AES 对称加密"
+      "AES 对称加密"
     }
   }
 }
@@ -47,12 +47,12 @@ struct EncryptionResult {
   let output: String
   let isEncryption: Bool
   let timestamp: Date
-  
+
   init(algorithm: EncryptionAlgorithm, input: String, output: String, isEncryption: Bool) {
     self.algorithm = algorithm
     self.input = input
     self.output = output
     self.isEncryption = isEncryption
-    self.timestamp = Date()
+    timestamp = Date()
   }
 }

@@ -1,69 +1,67 @@
-import Testing
-import Foundation
 import AppKit
+import Foundation
 import SwiftUI
+import Testing
 @testable import Tools
 
 struct QRCodeServiceTests {
-  
   // MARK: - Test Properties
-  
+
   let service = QRCodeService()
   let testText = "Hello, QR Code!"
   let longText = String(repeating: "A", count: 1001)
   let veryLongText = String(repeating: "B", count: 3000)
-  
+
   // MARK: - QR Code Generation Tests
-  
+
   @Test("QR码生成 - 基本功能测试")
-  func testBasicQRCodeGeneration() throws {
+  func basicQRCodeGeneration() throws {
     let options = QRCodeOptions()
     let result = try service.generateQRCode(from: testText, options: options)
-    
+
     #expect(result.inputText == testText)
     #expect(result.options.size == options.size)
     #expect(result.image.size == options.size)
   }
-  
+
   @Test("QR码生成 - 自定义尺寸测试", arguments: [
     CGSize(width: 100, height: 100),
     CGSize(width: 200, height: 200),
     CGSize(width: 300, height: 300),
     CGSize(width: 500, height: 500)
   ])
-  func testCustomSizeGeneration(size: CGSize) throws {
+  func customSizeGeneration(size: CGSize) throws {
     let options = QRCodeOptions(size: size)
     let result = try service.generateQRCode(from: testText, options: options)
-    
+
     #expect(result.image.size.width == size.width)
     #expect(result.image.size.height == size.height)
   }
-  
+
   @Test("QR码生成 - 纠错级别测试", arguments: QRCodeCorrectionLevel.allCases)
-  func testCorrectionLevels(level: QRCodeCorrectionLevel) throws {
+  func correctionLevels(level: QRCodeCorrectionLevel) throws {
     let options = QRCodeOptions(correctionLevel: level)
     let result = try service.generateQRCode(from: testText, options: options)
-    
+
     #expect(result.options.correctionLevel == level)
     #expect(!result.image.size.equalTo(.zero))
   }
-  
+
   @Test("QR码生成 - 颜色自定义测试")
-  func testCustomColors() throws {
+  func customColors() throws {
     let options = QRCodeOptions(
       foregroundColor: .red,
-      backgroundColor: .blue
-    )
+      backgroundColor: .blue)
     let result = try service.generateQRCode(from: testText, options: options)
-    
+
     #expect(result.options.foregroundColor == .red)
     #expect(result.options.backgroundColor == .blue)
   }
-  
+
   @Test("QR码生成 - 空输入错误测试")
-  func testEmptyInputError() {
+  func emptyInputError() {
     let options = QRCodeOptions()
-    
+
     do {
       _ = try service.generateQRCode(from: "", options: options)
       #expect(Bool(false), "应该抛出错误")
@@ -78,52 +76,51 @@ struct QRCodeServiceTests {
       #expect(Bool(false), "意外的错误类型")
     }
   }
-  
+
   @Test("QR码生成 - 长文本测试")
-  func testLongTextGeneration() throws {
+  func longTextGeneration() throws {
     let options = QRCodeOptions(
       size: CGSize(width: 300, height: 300),
-      correctionLevel: .high
-    )
+      correctionLevel: .high)
     let result = try service.generateQRCode(from: longText, options: options)
-    
+
     #expect(result.inputText == longText)
     #expect(!result.image.size.equalTo(.zero))
   }
-  
+
   // MARK: - QR Code Recognition Tests
-  
+
   @Test("QR码识别 - 基本功能测试")
-  func testBasicQRCodeRecognition() async throws {
+  func basicQRCodeRecognition() async throws {
     // 首先生成一个QR码
     let options = QRCodeOptions(size: CGSize(width: 200, height: 200))
     let generationResult = try service.generateQRCode(from: testText, options: options)
-    
+
     // 然后识别它
     let recognitionResults = try await service.recognizeQRCode(from: generationResult.image)
-    
+
     #expect(!recognitionResults.isEmpty)
     #expect(recognitionResults.first?.text == testText)
   }
-  
+
   @Test("QR码识别 - 多个QR码测试")
-  func testMultipleQRCodeRecognition() async throws {
+  func multipleQRCodeRecognition() async throws {
     // 生成一个QR码进行测试
     let options = QRCodeOptions(size: CGSize(width: 300, height: 300))
     let result = try service.generateQRCode(from: "Test Multiple", options: options)
-    
+
     let recognitionResults = try await service.recognizeQRCode(from: result.image)
-    
+
     // 至少应该识别到一个QR码
     #expect(!recognitionResults.isEmpty)
     #expect(recognitionResults.contains { $0.text == "Test Multiple" })
   }
-  
+
   @Test("QR码识别 - 无效图像测试")
-  func testInvalidImageRecognition() async {
+  func invalidImageRecognition() async {
     // 创建一个空白图像
     let image = NSImage(size: CGSize(width: 100, height: 100))
-    
+
     do {
       let results = try await service.recognizeQRCode(from: image)
       // 空白图像应该返回空结果，不应该抛出错误
@@ -133,36 +130,36 @@ struct QRCodeServiceTests {
       #expect(error is QRCodeError)
     }
   }
-  
+
   // MARK: - Validation Tests
-  
+
   @Test("文本验证 - 有效文本测试", arguments: [
     "Hello",
     "https://example.com",
     "短文本",
     String(repeating: "A", count: 100)
   ])
-  func testValidTextValidation(text: String) {
+  func validTextValidation(text: String) {
     let result = service.validateTextForQRCode(text)
     #expect(result.isValid == true)
   }
-  
+
   @Test("文本验证 - 空文本测试")
-  func testEmptyTextValidation() {
+  func emptyTextValidation() {
     let result = service.validateTextForQRCode("")
     #expect(result.isValid == false)
     #expect(result.suggestion != nil)
   }
-  
+
   @Test("文本验证 - 过长文本测试")
-  func testTooLongTextValidation() {
+  func tooLongTextValidation() {
     let result = service.validateTextForQRCode(veryLongText)
     #expect(result.isValid == false)
     #expect(result.suggestion?.contains("过长") == true)
   }
-  
+
   @Test("文本验证 - 长文本建议测试")
-  func testLongTextSuggestion() {
+  func longTextSuggestion() {
     let result = service.validateTextForQRCode(longText)
     #expect(result.isValid == true)
     #expect(result.suggestion != nil)
@@ -170,85 +167,83 @@ struct QRCodeServiceTests {
       #expect(suggestion.contains("建议使用高纠错级别以确保识别准确性"))
     }
   }
-  
+
   // MARK: - Utility Tests
-  
+
   @Test("推荐尺寸测试", arguments: [
     (25, CGSize(width: 150, height: 150)),
     (100, CGSize(width: 200, height: 200)),
     (300, CGSize(width: 250, height: 250)),
     (1000, CGSize(width: 300, height: 300))
   ])
-  func testRecommendedSize(textLength: Int, expectedSize: CGSize) {
+  func recommendedSize(textLength: Int, expectedSize: CGSize) {
     let size = service.getRecommendedSize(for: textLength)
     #expect(size == expectedSize)
   }
-  
+
   // MARK: - Model Tests
-  
+
   @Test("QRCodeOptions 默认值测试")
-  func testQRCodeOptionsDefaults() {
+  func qRCodeOptionsDefaults() {
     let options = QRCodeOptions()
-    
+
     #expect(options.size == CGSize(width: 200, height: 200))
     #expect(options.correctionLevel == .medium)
     #expect(options.foregroundColor == .black)
     #expect(options.backgroundColor == .white)
   }
-  
+
   @Test("QRCodeCorrectionLevel 显示名称测试", arguments: [
     (QRCodeCorrectionLevel.low, "低 (7%)"),
     (QRCodeCorrectionLevel.medium, "中 (15%)"),
     (QRCodeCorrectionLevel.quartile, "高 (25%)"),
     (QRCodeCorrectionLevel.high, "最高 (30%)")
   ])
-  func testCorrectionLevelDisplayNames(level: QRCodeCorrectionLevel, expectedName: String) {
+  func correctionLevelDisplayNames(level: QRCodeCorrectionLevel, expectedName: String) {
     #expect(level.displayName == expectedName)
   }
-  
+
   @Test("QRCodeCorrectionLevel Core Image值测试", arguments: [
     (QRCodeCorrectionLevel.low, "L"),
     (QRCodeCorrectionLevel.medium, "M"),
     (QRCodeCorrectionLevel.quartile, "Q"),
     (QRCodeCorrectionLevel.high, "H")
   ])
-  func testCorrectionLevelCoreImageValues(level: QRCodeCorrectionLevel, expectedValue: String) {
+  func correctionLevelCoreImageValues(level: QRCodeCorrectionLevel, expectedValue: String) {
     #expect(level.coreImageValue == expectedValue)
   }
-  
+
   @Test("QRCodeGenerationResult 初始化测试")
-  func testQRCodeGenerationResult() throws {
+  func qRCodeGenerationResult() throws {
     let options = QRCodeOptions()
     let generationResult = try service.generateQRCode(from: testText, options: options)
     let result = QRCodeGenerationResult(
       image: generationResult.image,
       inputText: testText,
-      options: options
-    )
-    
+      options: options)
+
     #expect(result.inputText == testText)
     #expect(result.options.size == options.size)
     #expect(result.timestamp <= Date())
   }
-  
+
   @Test("QRCodeRecognitionResult 初始化测试")
-  func testQRCodeRecognitionResult() {
+  func qRCodeRecognitionResult() {
     let result = QRCodeRecognitionResult(
       text: testText,
       confidence: 0.95,
-      boundingBox: CGRect(x: 0, y: 0, width: 100, height: 100)
-    )
-    
+      boundingBox: CGRect(x: 0, y: 0, width: 100, height: 100))
+
     #expect(result.text == testText)
     #expect(result.confidence == 0.95)
     #expect(result.boundingBox != nil)
     #expect(result.timestamp <= Date())
   }
-  
+
   // MARK: - Error Tests
-  
+
   @Test("QRCodeError 错误描述测试")
-  func testQRCodeErrorDescriptions() {
+  func qRCodeErrorDescriptions() {
     let errors: [QRCodeError] = [
       .emptyInput,
       .generationFailed("测试错误"),
@@ -256,32 +251,32 @@ struct QRCodeServiceTests {
       .invalidImage,
       .unsupportedFormat
     ]
-    
+
     for error in errors {
       #expect(error.errorDescription != nil)
       #expect(error.recoverySuggestion != nil)
     }
   }
-  
+
   // MARK: - Performance Tests
-  
+
   @Test("QR码生成性能测试")
-  func testQRCodeGenerationPerformance() throws {
+  func qRCodeGenerationPerformance() throws {
     let options = QRCodeOptions(size: CGSize(width: 500, height: 500))
-    
+
     // 生成多个QR码测试性能
-    for i in 0..<10 {
+    for index in 0..<10 {
       let text = "Performance Test \(i)"
       let result = try service.generateQRCode(from: text, options: options)
       #expect(!result.image.size.equalTo(.zero))
     }
   }
-  
+
   @Test("大尺寸QR码生成测试")
-  func testLargeSizeQRCodeGeneration() throws {
+  func largeSizeQRCodeGeneration() throws {
     let options = QRCodeOptions(size: CGSize(width: 1000, height: 1000))
     let result = try service.generateQRCode(from: longText, options: options)
-    
+
     #expect(result.image.size.width == 1000)
     #expect(result.image.size.height == 1000)
   }

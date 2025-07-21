@@ -5,77 +5,74 @@
 //  Created by didong on 2025/7/17.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct ToolsApp: App {
-  // Lazy initialization to improve startup performance
-  private lazy var securityService = SecurityService.shared
-  private lazy var performanceMonitor = PerformanceMonitor.shared
-  private lazy var errorLoggingService = ErrorLoggingService.shared
-  
-  // SwiftData model container
+  // SwiftData model container - optimized for faster startup
   var sharedModelContainer: ModelContainer = {
     let schema = Schema([
       ClipboardItem.self
     ])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-    
+
     do {
       return try ModelContainer(for: schema, configurations: [modelConfiguration])
     } catch {
       fatalError("Could not create ModelContainer: \(error)")
     }
   }()
-  
+
   var body: some Scene {
     WindowGroup {
-      ContentView()
-        .modelContainer(sharedModelContainer)
-        .preferredColorScheme(AppSettings.shared.theme.colorScheme)
-        .withErrorHandling()
-        .withPerformanceMonitoring(identifier: "MainApp")
-        .task {
-          await initializeAppLazily()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .performanceOptimizationNeeded)) { _ in
-          handlePerformanceOptimization()
-        }
+//      ContentView()
+//        .modelContainer(sharedModelContainer)
+//        .preferredColorScheme(AppSettings.shared.theme.colorScheme)
+//        .task {
+//          await initializeAppLazily()
+//        }
+//        .onReceive(NotificationCenter.default.publisher(for: .performanceOptimizationNeeded)) { _ in
+//          handlePerformanceOptimization()
+//        }
+      EmptyView()
     }
     .windowResizability(.contentSize)
     .windowToolbarStyle(.unified)
   }
-  
+
   // MARK: - App Initialization (Optimized for Startup Performance)
+
   private func initializeAppLazily() async {
-    // Defer heavy initialization to background queue to improve startup time
+    // Defer all non-essential initialization to background queue
     Task.detached(priority: .background) {
-      // Initialize error logging in background
-      await self.errorLoggingService.initialize()
-      
-      // Start performance monitoring in background (DEBUG mode only)
+      // Initialize error logging in background only when needed
       #if DEBUG
-      await self.performanceMonitor.startPerformanceMonitoring()
+        await ErrorLoggingService.shared.initialize()
+        PerformanceMonitor.shared.startPerformanceMonitoring()
+        print("✅ Debug services initialized")
       #endif
-      
+
+      // Initialize security service with delay to avoid impacting startup
+      DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2.0) {
+        _ = SecurityService.shared
+      }
+
       print("✅ App background initialization completed")
     }
-    
-    // Only essential initialization on main thread
-    print("🚀 App startup completed - background services initializing...")
+
+    print("🚀 App startup completed")
   }
-  
+
   // MARK: - Performance Optimization
+
   private func handlePerformanceOptimization() {
-    print("🔧 Handling performance optimization request")
-    
     // Cancel non-essential operations
     AsyncOperationManager.shared.cancelAllOperations()
-    
+
     // Clear caches
     URLCache.shared.removeAllCachedResponses()
-    
+
     // Force memory cleanup
     DispatchQueue.global(qos: .utility).async {
       autoreleasepool {

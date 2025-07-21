@@ -1,22 +1,22 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ClipboardView: View {
   @Environment(\.modelContext) private var modelContext
   @State private var clipboardService: ClipboardService?
   @State private var searchText = ""
-  @State private var selectedType: ClipboardItemType? = nil
+  @State private var selectedType: ClipboardItemType?
   @State private var showingClearAlert = false
   @State private var filteredItems: [ClipboardItem] = []
-  
+
   var body: some View {
     VStack(spacing: 0) {
       // Header
       headerView
-      
+
       // Search and Filter Bar
       searchAndFilterBar
-      
+
       // Content
       if let service = clipboardService {
         if filteredItems.isEmpty {
@@ -36,7 +36,7 @@ struct ClipboardView: View {
       clipboardService?.stopMonitoring()
     }
     .alert("清空历史记录", isPresented: $showingClearAlert) {
-      Button("取消", role: .cancel) { }
+      Button("取消", role: .cancel) {}
       Button("清空", role: .destructive) {
         clipboardService?.clearHistory()
         updateFilteredItems()
@@ -45,24 +45,25 @@ struct ClipboardView: View {
       Text("确定要清空所有粘贴板历史记录吗？此操作无法撤销。")
     }
   }
-  
+
   // MARK: - Header View
+
   private var headerView: some View {
     HStack {
       VStack(alignment: .leading, spacing: 4) {
         Text("粘贴板管理")
           .font(.title2)
           .fontWeight(.semibold)
-        
+
         if let service = clipboardService {
           Text("共 \(service.totalItemsCount) 条记录")
             .font(.caption)
             .foregroundColor(.secondary)
         }
       }
-      
+
       Spacer()
-      
+
       HStack(spacing: 12) {
         // Monitoring Toggle
         if let service = clipboardService {
@@ -84,7 +85,7 @@ struct ClipboardView: View {
           }
           .buttonStyle(.plain)
         }
-        
+
         // Clear All Button
         Button(action: {
           showingClearAlert = true
@@ -103,21 +104,22 @@ struct ClipboardView: View {
     .padding()
     .background(Color(NSColor.controlBackgroundColor))
   }
-  
+
   // MARK: - Search and Filter Bar
+
   private var searchAndFilterBar: some View {
     HStack(spacing: 12) {
       // Search Field
       HStack {
         Image(systemName: "magnifyingglass")
           .foregroundColor(.secondary)
-        
+
         TextField("搜索内容...", text: $searchText)
           .textFieldStyle(.plain)
           .onChange(of: searchText) { _, _ in
             updateFilteredItems()
           }
-        
+
         if !searchText.isEmpty {
           Button(action: {
             searchText = ""
@@ -132,16 +134,16 @@ struct ClipboardView: View {
       .padding(.vertical, 6)
       .background(Color(NSColor.textBackgroundColor))
       .cornerRadius(6)
-      
+
       // Type Filter
       Menu {
         Button("全部类型") {
           selectedType = nil
           updateFilteredItems()
         }
-        
+
         Divider()
-        
+
         ForEach(ClipboardItemType.allCases, id: \.self) { type in
           Button(action: {
             selectedType = selectedType == type ? nil : type
@@ -165,7 +167,8 @@ struct ClipboardView: View {
         .font(.caption)
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .background(selectedType != nil ? Color.accentColor.opacity(0.1) : Color(NSColor.controlBackgroundColor))
+        .background(selectedType != nil ? Color.accentColor
+          .opacity(0.1) : Color(NSColor.controlBackgroundColor))
         .cornerRadius(6)
       }
       .menuStyle(.borderlessButton)
@@ -174,21 +177,20 @@ struct ClipboardView: View {
     .padding(.bottom, 8)
     .background(Color(NSColor.controlBackgroundColor))
   }
-  
 
-  
   // MARK: - Empty State View
+
   private var emptyStateView: some View {
     VStack(spacing: 16) {
       Image(systemName: "doc.on.clipboard")
         .font(.system(size: 48))
         .foregroundColor(.secondary)
-      
+
       VStack(spacing: 8) {
         Text("暂无粘贴板记录")
           .font(.headline)
-        
-        if searchText.isEmpty && selectedType == nil {
+
+        if searchText.isEmpty, selectedType == nil {
           Text("开始监控后，复制的内容将自动保存到这里")
             .font(.caption)
             .foregroundColor(.secondary)
@@ -199,8 +201,9 @@ struct ClipboardView: View {
             .foregroundColor(.secondary)
         }
       }
-      
-      if let service = clipboardService, !service.isMonitoring && searchText.isEmpty && selectedType == nil {
+
+      if let service = clipboardService, !service.isMonitoring, searchText.isEmpty,
+         selectedType == nil {
         Button("开始监控") {
           Task {
             await service.startMonitoring()
@@ -212,8 +215,9 @@ struct ClipboardView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color(NSColor.textBackgroundColor))
   }
-  
+
   // MARK: - Clipboard List View
+
   private func clipboardListView(service: ClipboardService) -> some View {
     ScrollView {
       LazyVStack(spacing: 8) {
@@ -226,64 +230,67 @@ struct ClipboardView: View {
             onDelete: {
               service.removeItem(item)
               updateFilteredItems()
-            }
-          )
+            })
         }
       }
       .padding()
     }
     .background(Color(NSColor.textBackgroundColor))
   }
-  
+
   // MARK: - Helper Methods
+
   private func setupClipboardService() {
     clipboardService = ClipboardService(modelContext: modelContext)
     updateFilteredItems()
-    
+
     // Start monitoring asynchronously
     Task {
       await clipboardService?.startMonitoring()
     }
   }
-  
+
   private func updateFilteredItems() {
     guard let service = clipboardService else { return }
-    
+
     var items = service.clipboardHistory
-    
+
     // Apply search filter
     if !searchText.isEmpty {
       items = service.searchItems(query: searchText)
     }
-    
+
     // Apply type filter
     if let type = selectedType {
       items = items.filter { $0.type == type }
     }
-    
+
     filteredItems = items
   }
 }
 
 // MARK: - Preview
-#Preview {
-  let schema = Schema([ClipboardItem.self])
-  let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-  let container = try! ModelContainer(for: schema, configurations: [configuration])
-  let context = ModelContext(container)
-  
-  // Add sample data
-  let sampleItems = [
-    ClipboardItem(content: "Hello World"),
-    ClipboardItem(content: "https://www.apple.com"),
-    ClipboardItem(content: "func test() { return true }")
-  ]
-  
-  for item in sampleItems {
-    context.insert(item)
+
+struct ClipboardViewPreview: PreviewProvider {
+  static var previews: some View {
+    let schema = Schema([ClipboardItem.self])
+    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [configuration])
+    let context = ModelContext(container)
+
+    // Add sample data
+    let sampleItems = [
+      ClipboardItem(content: "Hello World"),
+      ClipboardItem(content: "https://www.apple.com"),
+      ClipboardItem(content: "func test() { return true }")
+    ]
+
+    for item in sampleItems {
+      context.insert(item)
+    }
+
+    return ClipboardView()
+      .modelContainer(container)
+      .frame(width: 800, height: 600)
   }
-  
-  return ClipboardView()
-    .modelContainer(container)
-    .frame(width: 800, height: 600)
 }

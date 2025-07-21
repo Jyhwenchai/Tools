@@ -97,7 +97,8 @@ xcodebuild -project Tools.xcodeproj -scheme Tools -destination 'platform=macOS' 
 - **No Network Access**: App doesn't connect to the internet
 - **Data Control**: You control all data retention and deletion
 - **Secure Cleanup**: Automatic cleanup of sensitive data
-- **Permission Transparency**: Clear permission requests with explanations
+- **Minimal Permissions**: Zero file access permissions, only clipboard access when needed
+- **Permission-Free Design**: Uses system file dialogs and drag & drop for file operations
 
 ## 🧪 Testing
 

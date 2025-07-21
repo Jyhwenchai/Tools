@@ -21,9 +21,9 @@ struct TimeConverterView: View {
   @State private var validationMessage: String = ""
   @State private var isValidInput: Bool = true
   @State private var showCurrentTime: Bool = false
-  
+
   private let timeService = TimeConverterService()
-  
+
   var body: some View {
     VStack(alignment: .leading, spacing: 24) {
       // 输入区域
@@ -33,9 +33,9 @@ struct TimeConverterView: View {
             Text("时间输入")
               .font(.headline)
               .foregroundStyle(.primary)
-            
+
             Spacer()
-            
+
             Button("当前时间") {
               loadCurrentTime()
             }
@@ -43,20 +43,19 @@ struct TimeConverterView: View {
             .font(.caption)
             .foregroundStyle(.blue)
           }
-          
+
           ToolTextField(
             title: "时间内容",
             text: $inputTime,
-            placeholder: "输入时间内容，或点击'当前时间'加载当前时间戳..."
-          )
-          
+            placeholder: "输入时间内容，或点击'当前时间'加载当前时间戳...")
+
           // 源格式选择
           VStack(alignment: .leading, spacing: 8) {
             Text("源格式")
               .font(.callout)
               .fontWeight(.semibold)
               .foregroundStyle(.primary)
-            
+
             Picker("源格式", selection: $sourceFormat) {
               ForEach(TimeFormat.allCases) { format in
                 VStack(alignment: .leading) {
@@ -70,32 +69,31 @@ struct TimeConverterView: View {
             }
             .pickerStyle(.menu)
           }
-          
+
           // 自定义格式输入（仅在选择自定义格式时显示）
           if sourceFormat == .custom {
             ToolTextField(
               title: "自定义格式",
               text: $customFormat,
-              placeholder: "例如: yyyy-MM-dd HH:mm:ss"
-            )
+              placeholder: "例如: yyyy-MM-dd HH:mm:ss")
           }
-          
+
           // 源时区选择
           VStack(alignment: .leading, spacing: 8) {
             Text("源时区")
               .font(.callout)
               .fontWeight(.semibold)
               .foregroundStyle(.primary)
-            
+
             TimeZonePicker(selection: $sourceTimeZone)
           }
-          
+
           // 输入验证状态
           if !inputTime.isEmpty {
             HStack(spacing: 4) {
               Image(systemName: isValidInput ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .foregroundStyle(isValidInput ? .green : .red)
-              
+
               Text(isValidInput ? "格式正确" : validationMessage)
                 .font(.caption)
                 .foregroundStyle(isValidInput ? .green : .red)
@@ -104,14 +102,14 @@ struct TimeConverterView: View {
           }
         }
       }
-      
+
       // 转换设置区域
       BrightCardView {
         VStack(alignment: .leading, spacing: 16) {
           Text("转换设置")
             .font(.headline)
             .foregroundStyle(.primary)
-          
+
           HStack(spacing: 24) {
             // 目标格式选择
             VStack(alignment: .leading, spacing: 8) {
@@ -119,7 +117,7 @@ struct TimeConverterView: View {
                 .font(.callout)
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
-              
+
               Picker("目标格式", selection: $targetFormat) {
                 ForEach(TimeFormat.allCases) { format in
                   VStack(alignment: .leading) {
@@ -133,66 +131,61 @@ struct TimeConverterView: View {
               }
               .pickerStyle(.menu)
             }
-            
+
             // 目标时区选择
             VStack(alignment: .leading, spacing: 8) {
               Text("目标时区")
                 .font(.callout)
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
-              
+
               TimeZonePicker(selection: $targetTimeZone)
             }
           }
-          
+
           // 自定义目标格式输入（仅在选择自定义格式时显示）
           if targetFormat == .custom {
             ToolTextField(
               title: "目标自定义格式",
               text: $customFormat,
-              placeholder: "例如: yyyy-MM-dd HH:mm:ss"
-            )
+              placeholder: "例如: yyyy-MM-dd HH:mm:ss")
           }
-          
+
           // 选项
           HStack {
             Toggle("包含毫秒", isOn: $includeMilliseconds)
               .font(.callout)
-            
+
             Spacer()
           }
-          
+
           // 操作按钮
           HStack(spacing: 12) {
             ToolButton(
               title: "转换",
               action: convertTime,
-              style: .primary
-            )
-            .disabled(inputTime.isEmpty || !isValidInput || isProcessing)
-            
+              style: .primary)
+              .disabled(inputTime.isEmpty || !isValidInput || isProcessing)
+
             ToolButton(
               title: "交换格式",
               action: swapFormats,
-              style: .secondary
-            )
-            
+              style: .secondary)
+
             ToolButton(
               title: "清空",
               action: clearAll,
-              style: .secondary
-            )
-            
+              style: .secondary)
+
             Spacer()
-            
+
             ProcessingStateView(
               isProcessing: isProcessing,
-              message: isProcessing ? "转换中..." : "就绪"
-            )
+              message: isProcessing ? "转换中..." : "就绪")
           }
         }
       }
-      
+
       // 输出区域
       if !outputTime.isEmpty {
         BrightCardView {
@@ -200,27 +193,26 @@ struct TimeConverterView: View {
             Text("转换结果")
               .font(.headline)
               .foregroundStyle(.primary)
-            
+
             ToolResultView(
               title: "转换后的时间",
               content: outputTime,
-              canCopy: true
-            )
+              canCopy: true)
           }
         }
       }
-      
+
       // 格式示例区域
       BrightCardView {
         VStack(alignment: .leading, spacing: 16) {
           Text("格式示例")
             .font(.headline)
             .foregroundStyle(.primary)
-          
+
           FormatExamplesView(timeService: timeService)
         }
       }
-      
+
       Spacer()
     }
     .padding(24)
@@ -228,7 +220,7 @@ struct TimeConverterView: View {
     .errorAlert($currentError)
     .onChange(of: inputTime) { _, newValue in
       validateInput(newValue)
-      if isValidInput && !newValue.isEmpty {
+      if isValidInput, !newValue.isEmpty {
         performRealTimeConversion()
       } else {
         outputTime = ""
@@ -236,49 +228,49 @@ struct TimeConverterView: View {
     }
     .onChange(of: sourceFormat) { _, _ in
       validateInput(inputTime)
-      if isValidInput && !inputTime.isEmpty {
+      if isValidInput, !inputTime.isEmpty {
         performRealTimeConversion()
       }
     }
     .onChange(of: targetFormat) { _, _ in
-      if isValidInput && !inputTime.isEmpty {
+      if isValidInput, !inputTime.isEmpty {
         performRealTimeConversion()
       }
     }
     .onChange(of: sourceTimeZone) { _, _ in
-      if isValidInput && !inputTime.isEmpty {
+      if isValidInput, !inputTime.isEmpty {
         performRealTimeConversion()
       }
     }
     .onChange(of: targetTimeZone) { _, _ in
-      if isValidInput && !inputTime.isEmpty {
+      if isValidInput, !inputTime.isEmpty {
         performRealTimeConversion()
       }
     }
     .onChange(of: customFormat) { _, _ in
       if sourceFormat == .custom || targetFormat == .custom {
         validateInput(inputTime)
-        if isValidInput && !inputTime.isEmpty {
+        if isValidInput, !inputTime.isEmpty {
           performRealTimeConversion()
         }
       }
     }
     .onChange(of: includeMilliseconds) { _, _ in
-      if isValidInput && !inputTime.isEmpty {
+      if isValidInput, !inputTime.isEmpty {
         performRealTimeConversion()
       }
     }
   }
-  
+
   private func validateInput(_ input: String) {
     guard !input.isEmpty else {
       isValidInput = true
       validationMessage = ""
       return
     }
-    
+
     let format = sourceFormat == .custom ? customFormat : ""
-    
+
     // 特殊处理时间戳验证
     if sourceFormat == .timestamp {
       isValidInput = timeService.validateTimestamp(input)
@@ -288,7 +280,10 @@ struct TimeConverterView: View {
         validationMessage = ""
       }
     } else {
-      isValidInput = timeService.validateDateString(input, format: sourceFormat, customFormat: format)
+      isValidInput = timeService.validateDateString(
+        input,
+        format: sourceFormat,
+        customFormat: format)
       if !isValidInput {
         switch sourceFormat {
         case .iso8601:
@@ -305,24 +300,23 @@ struct TimeConverterView: View {
       }
     }
   }
-  
+
   private func performRealTimeConversion() {
-    guard !inputTime.isEmpty && isValidInput else {
+    guard !inputTime.isEmpty, isValidInput else {
       outputTime = ""
       return
     }
-    
+
     let options = TimeConversionOptions(
       sourceFormat: sourceFormat,
       targetFormat: targetFormat,
       sourceTimeZone: sourceTimeZone,
       targetTimeZone: targetTimeZone,
       customFormat: customFormat,
-      includeMilliseconds: includeMilliseconds
-    )
-    
+      includeMilliseconds: includeMilliseconds)
+
     let result = timeService.convertTime(input: inputTime, options: options)
-    
+
     if result.success {
       outputTime = result.result
       currentError = nil
@@ -331,61 +325,60 @@ struct TimeConverterView: View {
       // 不在实时转换中显示错误，避免过于频繁的错误提示
     }
   }
-  
+
   private func convertTime() {
     Task {
       await performConversion()
     }
   }
-  
+
   @MainActor
   private func performConversion() async {
     isProcessing = true
     currentError = nil
-    
+
     let options = TimeConversionOptions(
       sourceFormat: sourceFormat,
       targetFormat: targetFormat,
       sourceTimeZone: sourceTimeZone,
       targetTimeZone: targetTimeZone,
       customFormat: customFormat,
-      includeMilliseconds: includeMilliseconds
-    )
-    
+      includeMilliseconds: includeMilliseconds)
+
     let result = timeService.convertTime(input: inputTime, options: options)
-    
+
     if result.success {
       outputTime = result.result
     } else {
       outputTime = ""
       currentError = ToolError.processingFailed(result.error ?? "转换失败")
     }
-    
+
     isProcessing = false
   }
-  
+
   private func swapFormats() {
     let tempFormat = sourceFormat
     let tempTimeZone = sourceTimeZone
-    
+
     sourceFormat = targetFormat
     sourceTimeZone = targetTimeZone
     targetFormat = tempFormat
     targetTimeZone = tempTimeZone
-    
+
     // 如果有输出结果，将其作为新的输入
     if !outputTime.isEmpty {
       inputTime = outputTime
       outputTime = ""
     }
   }
-  
+
   private func loadCurrentTime() {
     let timestamp = timeService.getCurrentTimestamp(includeMilliseconds: includeMilliseconds)
     inputTime = timestamp
     sourceFormat = .timestamp
   }
-  
+
   private func clearAll() {
     inputTime = ""
     outputTime = ""
@@ -401,9 +394,10 @@ struct TimeConverterView: View {
 }
 
 // MARK: - Time Zone Picker
+
 struct TimeZonePicker: View {
   @Binding var selection: TimeZone
-  
+
   var body: some View {
     Picker("时区", selection: $selection) {
       ForEach(TimeZoneInfo.commonTimeZones, id: \.identifier) { timeZoneInfo in
@@ -421,9 +415,10 @@ struct TimeZonePicker: View {
 }
 
 // MARK: - Format Examples View
+
 struct FormatExamplesView: View {
   let timeService: TimeConverterService
-  
+
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       ForEach(TimeFormat.allCases) { format in
@@ -432,11 +427,11 @@ struct FormatExamplesView: View {
             .font(.callout)
             .fontWeight(.medium)
             .foregroundStyle(.primary)
-          
+
           Text(format.description)
             .font(.caption)
             .foregroundStyle(.secondary)
-          
+
           Text(timeService.getCurrentTime(format: format, includeMilliseconds: false))
             .font(.system(.caption, design: .monospaced))
             .foregroundStyle(.blue)

@@ -24,13 +24,13 @@ class NavigationManager {
 
     var icon: String {
       switch self {
-      case .encryption: return "lock.shield"
-      case .json: return "doc.text"
-      case .imageProcessing: return "photo"
-      case .qrCode: return "qrcode"
-      case .timeConverter: return "clock"
-      case .clipboard: return "doc.on.clipboard"
-      case .settings: return "gearshape"
+      case .encryption: "lock.shield"
+      case .json: "doc.text"
+      case .imageProcessing: "photo"
+      case .qrCode: "qrcode"
+      case .timeConverter: "clock"
+      case .clipboard: "doc.on.clipboard"
+      case .settings: "gearshape"
       }
     }
 
@@ -38,13 +38,13 @@ class NavigationManager {
 
     var description: String {
       switch self {
-      case .encryption: return "文本加密解密工具"
-      case .json: return "JSON格式化和处理"
-      case .imageProcessing: return "图片压缩和处理"
-      case .qrCode: return "二维码生成和识别"
-      case .timeConverter: return "时间格式转换"
-      case .clipboard: return "粘贴板历史管理"
-      case .settings: return "应用设置和偏好"
+      case .encryption: "文本加密解密工具"
+      case .json: "JSON格式化和处理"
+      case .imageProcessing: "图片压缩和处理"
+      case .qrCode: "二维码生成和识别"
+      case .timeConverter: "时间格式转换"
+      case .clipboard: "粘贴板历史管理"
+      case .settings: "应用设置和偏好"
       }
     }
   }
