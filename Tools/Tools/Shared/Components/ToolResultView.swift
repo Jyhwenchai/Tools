@@ -13,6 +13,8 @@ struct ToolResultView: View {
   let content: String
   let canCopy: Bool
 
+  @State private var showCopySuccess = false
+
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
@@ -24,11 +26,18 @@ struct ToolResultView: View {
         Spacer()
 
         if canCopy {
-          Button("复制") {
+          Button(showCopySuccess ? "已复制" : "复制") {
             NSPasteboard.general.setString(content, forType: .string)
+            showCopySuccess = true
+
+            // 2秒后隐藏成功提示
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+              showCopySuccess = false
+            }
           }
           .buttonStyle(.borderless)
           .font(.caption)
+          .foregroundColor(showCopySuccess ? .green : .primary)
         }
       }
 

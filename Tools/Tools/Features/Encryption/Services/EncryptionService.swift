@@ -67,32 +67,34 @@ class EncryptionService {
   }
 }
 
+// MARK: - Private Helper Methods
+
+private extension EncryptionService {
+  func textToData(_ text: String) throws -> Data {
+    guard let data = text.data(using: .utf8) else {
+      throw ToolError.processingFailed("文本编码失败")
+    }
+    return data
+  }
+}
+
 // MARK: - Private Hash Methods
 
 private extension EncryptionService {
   func hashMD5(_ text: String) throws -> String {
-    guard let data = text.data(using: .utf8) else {
-      throw ToolError.processingFailed("文本编码失败")
-    }
-
+    let data = try textToData(text)
     let digest = Insecure.MD5.hash(data: data)
     return digest.map { String(format: "%02hhx", $0) }.joined()
   }
 
   func hashSHA1(_ text: String) throws -> String {
-    guard let data = text.data(using: .utf8) else {
-      throw ToolError.processingFailed("文本编码失败")
-    }
-
+    let data = try textToData(text)
     let digest = Insecure.SHA1.hash(data: data)
     return digest.map { String(format: "%02hhx", $0) }.joined()
   }
 
   func hashSHA256(_ text: String) throws -> String {
-    guard let data = text.data(using: .utf8) else {
-      throw ToolError.processingFailed("文本编码失败")
-    }
-
+    let data = try textToData(text)
     let digest = SHA256.hash(data: data)
     return digest.map { String(format: "%02hhx", $0) }.joined()
   }
@@ -102,10 +104,7 @@ private extension EncryptionService {
 
 private extension EncryptionService {
   func encodeBase64(_ text: String) throws -> String {
-    guard let data = text.data(using: .utf8) else {
-      throw ToolError.processingFailed("文本编码失败")
-    }
-
+    let data = try textToData(text)
     return data.base64EncodedString()
   }
 
@@ -126,9 +125,7 @@ private extension EncryptionService {
 
 private extension EncryptionService {
   func encryptAES(_ text: String, key: String) throws -> String {
-    guard let textData = text.data(using: .utf8) else {
-      throw ToolError.processingFailed("文本编码失败")
-    }
+    let textData = try textToData(text)
 
     // 从提供的密钥字符串创建256位密钥
     let keyData = try createAESKey(from: key)
@@ -187,10 +184,7 @@ private extension EncryptionService {
   }
 
   private func createAESKey(from keyString: String) throws -> Data {
-    guard let keyData = keyString.data(using: .utf8) else {
-      throw ToolError.processingFailed("密钥编码失败")
-    }
-
+    let keyData = try textToData(keyString)
     // 使用SHA256创建256位密钥
     let digest = SHA256.hash(data: keyData)
     return Data(digest)
