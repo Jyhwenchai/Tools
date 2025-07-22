@@ -32,27 +32,27 @@ struct ContentView: View {
       await initializeContentView()
     }
     .withStabilityMonitoring()
-    #if DEBUG
-      .overlay(alignment: .topTrailing) {
-        performanceIndicator
-      }
-      .alert("性能警告", isPresented: $showPerformanceAlert) {
-        Button("确定") {
-          showPerformanceAlert = false
-        }
-        Button("优化") {
-          optimizePerformance()
-          showPerformanceAlert = false
-        }
-      } message: {
-        Text(performanceWarningMessage)
-      }
-      .onChange(of: performanceMonitor?.performanceWarnings ?? []) { _, warnings in
-        if !warnings.isEmpty, !showPerformanceAlert {
-          showPerformanceAlert = true
-        }
-      }
-    #endif
+//    #if DEBUG
+//      .overlay(alignment: .topTrailing) {
+//        performanceIndicator
+//      }
+//      .alert("性能警告", isPresented: $showPerformanceAlert) {
+//        Button("确定") {
+//          showPerformanceAlert = false
+//        }
+//        Button("优化") {
+//          optimizePerformance()
+//          showPerformanceAlert = false
+//        }
+//      } message: {
+//        Text(performanceWarningMessage)
+//      }
+//      .onChange(of: performanceMonitor?.performanceWarnings ?? []) { _, warnings in
+//        if !warnings.isEmpty, !showPerformanceAlert {
+//          showPerformanceAlert = true
+//        }
+//      }
+//    #endif
   }
 
   // MARK: - Lazy Initialization
