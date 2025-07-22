@@ -12,6 +12,25 @@ struct ToolTextField: View {
   @Binding
   var text: String
   let placeholder: String
+  let minHeight: CGFloat
+  let maxHeight: CGFloat
+  let fixedHeight: CGFloat?
+  
+  init(
+    title: String,
+    text: Binding<String>,
+    placeholder: String,
+    minHeight: CGFloat = 100,
+    maxHeight: CGFloat = 300,
+    fixedHeight: CGFloat? = nil
+  ) {
+    self.title = title
+    self._text = text
+    self.placeholder = placeholder
+    self.minHeight = minHeight
+    self.maxHeight = maxHeight
+    self.fixedHeight = fixedHeight
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -20,17 +39,15 @@ struct ToolTextField: View {
         .fontWeight(.semibold)
         .foregroundStyle(.primary)
 
-      TextField(placeholder, text: $text, axis: .vertical)
-        .textFieldStyle(BrightTextFieldStyle())
-        .lineLimit(1...10)
-    }
-  }
-}
-
-struct BrightTextFieldStyle: TextFieldStyle {
-  func _body(configuration: TextField<Self._Label>) -> some View {
-    configuration
-      .padding(8)
+      ScrollView {
+        TextField(placeholder, text: $text, axis: .vertical)
+          .textFieldStyle(BrightTextFieldStyle())
+          .lineLimit(nil)
+      }
+      .frame(
+        minHeight: fixedHeight ?? minHeight,
+        maxHeight: fixedHeight ?? maxHeight
+      )
       .background(Color(.controlBackgroundColor))
       .clipShape(RoundedRectangle(cornerRadius: 8))
       .overlay(
@@ -41,5 +58,14 @@ struct BrightTextFieldStyle: TextFieldStyle {
         radius: 2,
         x: 0,
         y: 1)
+    }
+  }
+}
+
+struct BrightTextFieldStyle: TextFieldStyle {
+  func _body(configuration: TextField<Self._Label>) -> some View {
+    configuration
+      .padding(8)
+      .background(Color.clear)
   }
 }
