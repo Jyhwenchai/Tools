@@ -304,13 +304,11 @@ struct JSONView: View {
         .frame(maxWidth: .infinity)
       } else {
         // 根据操作类型选择显示方式
-        if (lastOperation == .format || lastOperation == .minify)
-          && !formattedJSON.isEmpty
-        {
-          // 使用JSONWebView显示格式化的JSON
+        if lastOperation == .format && !formattedJSON.isEmpty {
+          // 格式化操作：只显示JSONWebView
           VStack(alignment: .leading, spacing: 12) {
             HStack {
-              Text(lastOperation == .format ? "格式化结果" : "压缩结果")
+              Text("格式化结果")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -332,6 +330,22 @@ struct JSONView: View {
                 RoundedRectangle(cornerRadius: 8)
                   .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
               )
+          }
+        } else if lastOperation == .minify && !formattedJSON.isEmpty && !outputText.isEmpty {
+          // 压缩操作：显示统计信息和压缩后的JSON
+          VStack(alignment: .leading, spacing: 16) {
+            // 压缩统计信息
+            ToolResultView(
+              title: "压缩结果",
+              content: outputText,
+              canCopy: true
+            )
+            
+            ToolResultView(
+              title: "压缩后的JSON",
+              content: formattedJSON,
+              canCopy: true
+            )
           }
         } else if lastOperation == .validate && !formattedJSON.isEmpty
           && !outputText.isEmpty
@@ -456,15 +470,26 @@ struct JSONView: View {
     lastOperation = operation
 
     do {
-      let result: String
-
       switch operation {
       case .format:
-        result = try jsonService.formatJSON(inputJSON)
+        let result = try jsonService.formatJSON(inputJSON)
         formattedJSON = result
       case .minify:
-        result = try jsonService.minifyJSON(inputJSON)
+        let result = try jsonService.minifyJSON(inputJSON)
         formattedJSON = result
+        // 为压缩操作添加统计信息
+        let originalStats = calculateJSONStats(inputJSON)
+        let compressedStats = calculateJSONStats(result)
+        outputText = """
+          ✅ JSON压缩完成
+
+          压缩统计:
+          • 原始字符数: \(originalStats.characterCount)
+          • 压缩后字符数: \(compressedStats.characterCount)
+          • 压缩率: \(String(format: "%.1f", (1.0 - Double(compressedStats.characterCount) / Double(originalStats.characterCount)) * 100))%
+          • 原始行数: \(originalStats.lineCount)
+          • 压缩后行数: \(compressedStats.lineCount)
+          """
       case .validate:
         let validation = jsonService.validateJSON(inputJSON)
         if validation.isValid {
@@ -487,11 +512,10 @@ struct JSONView: View {
             • 布尔字段数: \(stats.booleanCount)
             """
         } else {
-          result = "❌ JSON格式错误: \(validation.errorMessage ?? "")"
-          outputText = result
+          outputText = "❌ JSON格式错误: \(validation.errorMessage ?? "")"
         }
       case .generateModel:
-        result = try jsonService.generateModelCode(
+        let result = try jsonService.generateModelCode(
           inputJSON,
           language: selectedLanguage,
           className: className

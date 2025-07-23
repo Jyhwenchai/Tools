@@ -55,8 +55,9 @@ struct ToolResultView: View {
           .foregroundStyle(.secondary)
           .textSelection(.enabled)
           .frame(maxWidth: .infinity, alignment: .leading)
+          .padding()
       }
-      .frame(minHeight: 100, maxHeight: 300)
+      .frame(minHeight: 100, maxHeight: .infinity)
       .background(Color(.controlBackgroundColor))
       .clipShape(RoundedRectangle(cornerRadius: 8))
       .overlay(
