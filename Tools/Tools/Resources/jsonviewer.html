@@ -199,6 +199,7 @@
 
     /* Dark mode styles using prefers-color-scheme */
     @media (prefers-color-scheme: dark) {
+
       html,
       body {
         background-color: #1e1e1e;
@@ -341,7 +342,7 @@
     const options = {
       mode: "view",        // Use tree mode for better expand/collapse functionality
       // modes: ['tree', 'view', 'code'], // Allow switching between modes
-      mainMenuBar: true,   // Show menu bar with expand/collapse options
+      mainMenuBar: false,   // Show menu bar with expand/collapse options
       navigationBar: false,
       statusBar: false,
       search: true,        // Enable search functionality
@@ -414,6 +415,37 @@
         }
       } catch (e) {
         console.log("Could not toggle path:", path);
+      }
+    };
+
+    // Search functionality
+    window.searchJSON = function (query) {
+      try {
+        if (editor.search) {
+          editor.search(query);
+        }
+      } catch (e) {
+        console.log("Search failed:", e);
+      }
+    };
+
+    window.clearSearch = function () {
+      try {
+        if (editor.search) {
+          editor.search('');
+        }
+      } catch (e) {
+        console.log("Clear search failed:", e);
+      }
+    };
+
+    // Get current JSON data
+    window.getCurrentJSON = function () {
+      try {
+        return editor.get();
+      } catch (e) {
+        console.log("Get JSON failed:", e);
+        return null;
       }
     };
 

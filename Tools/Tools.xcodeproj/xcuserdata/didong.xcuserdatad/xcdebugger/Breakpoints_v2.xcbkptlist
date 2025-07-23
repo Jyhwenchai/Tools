@@ -3,4 +3,130 @@
    uuid = "F4143313-5DCA-4DFF-91FB-E5BE7697AD7E"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "C4D8B355-95B9-4983-A3D9-C1F3C5E9F7D4"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Tools/Features/JSON/Views/JSONWebView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "247"
+            endingLineNumber = "247"
+            landmarkName = "expandAll()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "C4D8B355-95B9-4983-A3D9-C1F3C5E9F7D4 - 1b4b05a47278a087"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Tools._PlatformWebView.Coordinator.expandAll() -&gt; ()"
+                  moduleName = "Tools.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/didong/Desktop/work/project/Tools/Tools/Tools/Features/JSON/Views/JSONWebView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "247"
+                  endingLineNumber = "247">
+               </Location>
+               <Location
+                  uuid = "C4D8B355-95B9-4983-A3D9-C1F3C5E9F7D4 - 512fc2d321f7b14d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 @Swift.MainActor @Sendable (Swift.Optional&lt;Any&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in Tools._PlatformWebView.Coordinator.expandAll() -&gt; ()"
+                  moduleName = "Tools.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/didong/Desktop/work/project/Tools/Tools/Tools/Features/JSON/Views/JSONWebView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "247"
+                  endingLineNumber = "247">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "3C0C2B9E-495E-4CD9-9C6B-A3C9E3298BA6"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Tools/Features/JSON/Views/JSONWebView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "263"
+            endingLineNumber = "263"
+            landmarkName = "searchJSON(_:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BC8DDB80-B955-4E42-B06B-9D5C87728EBA"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Tools/Features/JSON/Views/JSONWebView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "273"
+            endingLineNumber = "273"
+            landmarkName = "clearSearch()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "BC8DDB80-B955-4E42-B06B-9D5C87728EBA - 120b21209909df27"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Tools._PlatformWebView.Coordinator.clearSearch() -&gt; ()"
+                  moduleName = "Tools.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/didong/Desktop/work/project/Tools/Tools/Tools/Features/JSON/Views/JSONWebView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "273"
+                  endingLineNumber = "273">
+               </Location>
+               <Location
+                  uuid = "BC8DDB80-B955-4E42-B06B-9D5C87728EBA - b866c825c14a303d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 @Swift.MainActor @Sendable (Swift.Optional&lt;Any&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in Tools._PlatformWebView.Coordinator.clearSearch() -&gt; ()"
+                  moduleName = "Tools.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/didong/Desktop/work/project/Tools/Tools/Tools/Features/JSON/Views/JSONWebView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "273"
+                  endingLineNumber = "273">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5126FCE6-ACB9-4949-B554-9C89DBB0EF5C"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Tools/Features/JSON/Views/JSONWebView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "39"
+            endingLineNumber = "39"
+            landmarkName = "controlToolbar"
+            landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

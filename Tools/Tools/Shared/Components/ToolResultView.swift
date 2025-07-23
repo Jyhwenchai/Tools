@@ -26,7 +26,8 @@ struct ToolResultView: View {
         Spacer()
 
         if canCopy {
-          Button(showCopySuccess ? "已复制" : "复制") {
+          Button(action: {
+            NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(content, forType: .string)
             showCopySuccess = true
 
@@ -34,10 +35,17 @@ struct ToolResultView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
               showCopySuccess = false
             }
+          }) {
+            HStack(spacing: 4) {
+              Image(systemName: showCopySuccess ? "checkmark.circle.fill" : "doc.on.doc")
+                .font(.caption)
+              Text(showCopySuccess ? "已复制" : "复制")
+                .font(.caption)
+            }
           }
           .buttonStyle(.borderless)
-          .font(.caption)
-          .foregroundColor(showCopySuccess ? .green : .primary)
+          .foregroundColor(showCopySuccess ? .green : .blue)
+          .animation(.easeInOut(duration: 0.2), value: showCopySuccess)
         }
       }
 
