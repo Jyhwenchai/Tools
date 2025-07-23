@@ -350,7 +350,8 @@
       escapeUnicode: false,
       sortObjectKeys: false,
       limitDragging: true,
-      theme: 'default'
+      theme: 'default',
+      expandAll: true      // Expand all nodes by default
     };
     const editor = new JSONEditor(container, options);
     function setJSON(json) {
@@ -364,20 +365,28 @@
 
         editor.set(json);
 
-        // Expand first level by default (GitHub-like behavior)
+        // Expand first level by default
         setTimeout(() => {
-          if (editor.expandAll) {
-            editor.collapseAll();
-            // Expand only the root level
-            const rootNodes = container.querySelectorAll('.jsoneditor-tree > .jsoneditor-node');
-            rootNodes.forEach(node => {
-              const expandButton = node.querySelector('.jsoneditor-expandable');
-              if (expandButton) {
-                expandButton.click();
+          try {
+            // First expand all to ensure everything is accessible
+            if (editor.expandAll) {
+              editor.expandAll();
+            }
+            // Also try alternative expansion method for better compatibility
+            const expandButtons = container.querySelectorAll('.jsoneditor-expandable');
+            expandButtons.forEach(button => {
+              try {
+                if (button.click) {
+                  button.click();
+                }
+              } catch (e) {
+                // Ignore individual button click errors
               }
             });
+          } catch (e) {
+            console.log("Expand failed:", e);
           }
-        }, 100);
+        }, 150);
 
       } catch (e) {
         console.error("Invalid JSON", e);
@@ -449,8 +458,24 @@
       }
     };
 
-    // 初始化时设置空对象
+    // 初始化时设置空对象，并确保展开
     editor.set({});
+    
+    // Ensure expansion on any JSON update
+    const originalSet = editor.set;
+    editor.set = function(json) {
+      originalSet.call(this, json);
+      // Auto-expand after setting JSON
+      setTimeout(() => {
+        try {
+          if (this.expandAll) {
+            this.expandAll();
+          }
+        } catch (e) {
+          console.log("Auto-expand failed:", e);
+        }
+      }, 100);
+    };
   </script>
 </body>
 
