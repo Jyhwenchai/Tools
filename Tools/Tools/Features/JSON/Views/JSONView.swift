@@ -47,6 +47,16 @@ struct JSONView: View {
     .errorAlert($currentError)
     .onChange(of: inputJSON) { _, newValue in
       validateJSONInput(newValue)
+      // 自动更新输出结果
+      if !newValue.isEmpty && isValidJSON {
+        Task {
+          await autoUpdateOutput()
+        }
+      } else {
+        // 清空输出当输入为空或无效时
+        outputText = ""
+        formattedJSON = ""
+      }
     }
   }
 
@@ -82,7 +92,10 @@ struct JSONView: View {
             action: { performOperation(.generateModel) },
             style: .secondary
           )
-          .disabled(inputJSON.isEmpty || !isValidJSON || isProcessing || className.isEmpty)
+          .disabled(
+            inputJSON.isEmpty || !isValidJSON || isProcessing
+              || className.isEmpty
+          )
 
           ToolButton(
             title: "提取路径",
@@ -96,7 +109,8 @@ struct JSONView: View {
           // 处理状态
           ProcessingStateView(
             isProcessing: isProcessing,
-            message: isProcessing ? "处理中..." : "就绪")
+            message: isProcessing ? "处理中..." : "就绪"
+          )
         }
 
         // 第二行：配置选项
@@ -165,8 +179,11 @@ struct JSONView: View {
 
         // 实时验证状态
         HStack(spacing: 4) {
-          Image(systemName: isValidJSON ? "checkmark.circle.fill" : "xmark.circle.fill")
-            .foregroundStyle(isValidJSON ? .green : .red)
+          Image(
+            systemName: isValidJSON
+              ? "checkmark.circle.fill" : "xmark.circle.fill"
+          )
+          .foregroundStyle(isValidJSON ? .green : .red)
 
           Text(isValidJSON ? "格式正确" : validationMessage)
             .font(.caption)
@@ -175,62 +192,83 @@ struct JSONView: View {
       }
 
       // 输入区域 - 占用所有可用空间
-      if inputJSON.isEmpty {
-        VStack {
-          EnhancedDropZone.forJSON(
-            onFilesDropped: { urls in
-              loadJSONFromFile(urls.first)
-            },
-            onButtonTapped: {
-              Task {
-                await openFileDialog()
+      VStack(alignment: .leading, spacing: 8) {
+        // 输入框占用除统计信息和文件操作按钮外的所有空间
+        ScrollView {
+          TextEditor(text: $inputJSON)
+            .padding(.top, 10)
+            .overlay(alignment: .topLeading) {
+              if inputJSON.isEmpty {
+                Text("输入或粘贴JSON内容...")
+                  .foregroundColor(.secondary)
+                  .padding(.horizontal, 4)
+                  .padding(.vertical, 8)
+                  .allowsHitTesting(false)
               }
-            })
-          Spacer()
+            }
+            .lineLimit(nil)
+            .frame(
+              maxWidth: .infinity,
+              minHeight: 280,
+              maxHeight: .infinity,
+              alignment: .topLeading
+            )
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-      } else {
-        VStack(alignment: .leading, spacing: 8) {
-          // 使用GeometryReader来获取可用空间
-          GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 8) {
-              // 输入框占用除统计信息外的所有空间
-              ScrollView {
-                TextField("输入或粘贴JSON内容...", text: $inputJSON, axis: .vertical)
-                  .textFieldStyle(BrightTextFieldStyle())
-                  .lineLimit(nil)
-//                  .frame(minHeight: geometry.size.height - 30) // 减去统计信息的高度
-                  .frame(maxHeight: .infinity)
-              }
-              .background(Color(.controlBackgroundColor))
-              .clipShape(RoundedRectangle(cornerRadius: 8))
-              .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                  .stroke(Color(.separatorColor), lineWidth: 1.5))
-              .shadow(
-                color: Color.black.opacity(0.03),
-                radius: 2,
-                x: 0,
-                y: 1)
-              
-              // 统计信息
-              if !inputJSON.isEmpty {
-                HStack(spacing: 12) {
-                  Text("字符数: \(inputJSON.count)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+        .frame(minHeight: 300, maxHeight: .infinity)
+        .background(Color(.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+          RoundedRectangle(cornerRadius: 8)
+            .stroke(Color(.separatorColor), lineWidth: 1.5)
+        )
+        .shadow(
+          color: Color.black.opacity(0.03),
+          radius: 2,
+          x: 0,
+          y: 1
+        )
+        .onDrop(of: [.json, .plainText], isTargeted: nil) { providers in
+          // 处理拖拽文件
+          guard let provider = providers.first else { return false }
 
-                  Text("行数: \(inputJSON.components(separatedBy: .newlines).count)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-
-                  Spacer()
-                }
-                .frame(height: 20) // 固定统计信息高度
+          _ = provider.loadObject(ofClass: URL.self) { url, _ in
+            if let url = url {
+              DispatchQueue.main.async {
+                loadJSONFromFile(url)
               }
             }
           }
+          return true
         }
+
+        // 底部操作区域
+        HStack(spacing: 12) {
+          // 统计信息
+          if !inputJSON.isEmpty {
+            HStack(spacing: 12) {
+              Text("字符数: \(inputJSON.count)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+
+              Text("行数: \(inputJSON.components(separatedBy: .newlines).count)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          Spacer()
+
+          // 文件操作按钮
+          Button("从文件加载") {
+            Task {
+              await openFileDialog()
+            }
+          }
+          .buttonStyle(.borderless)
+          .font(.caption)
+          .foregroundStyle(.blue)
+        }
+        .frame(height: 20)  // 固定底部区域高度
       }
     }
     .padding(16)
@@ -266,16 +304,18 @@ struct JSONView: View {
         .frame(maxWidth: .infinity)
       } else {
         // 根据操作类型选择显示方式
-        if (lastOperation == .format || lastOperation == .minify) && !formattedJSON.isEmpty {
+        if (lastOperation == .format || lastOperation == .minify)
+          && !formattedJSON.isEmpty
+        {
           // 使用JSONWebView显示格式化的JSON
           VStack(alignment: .leading, spacing: 12) {
             HStack {
               Text(lastOperation == .format ? "格式化结果" : "压缩结果")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-              
+
               Spacer()
-              
+
               Button("复制JSON") {
                 copyToClipboard(formattedJSON)
               }
@@ -283,7 +323,7 @@ struct JSONView: View {
               .font(.caption)
               .foregroundStyle(.blue)
             }
-            
+
             JSONWebView(jsonString: formattedJSON)
               .frame(minHeight: 300)
               .background(Color(NSColor.controlBackgroundColor))
@@ -293,24 +333,27 @@ struct JSONView: View {
                   .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
               )
           }
-        } else if lastOperation == .validate && !formattedJSON.isEmpty && !outputText.isEmpty {
+        } else if lastOperation == .validate && !formattedJSON.isEmpty
+          && !outputText.isEmpty
+        {
           // 验证成功或路径提取时显示JSONWebView和信息
           VStack(alignment: .leading, spacing: 16) {
             // 信息显示
             ToolResultView(
               title: extractedPaths.isEmpty ? "验证结果" : "路径提取结果",
               content: outputText,
-              canCopy: true)
-            
+              canCopy: true
+            )
+
             // JSON预览
             VStack(alignment: .leading, spacing: 8) {
               HStack {
                 Text("JSON预览")
                   .font(.subheadline)
                   .foregroundStyle(.secondary)
-                
+
                 Spacer()
-                
+
                 Button("复制JSON") {
                   copyToClipboard(formattedJSON)
                 }
@@ -318,7 +361,7 @@ struct JSONView: View {
                 .font(.caption)
                 .foregroundStyle(.blue)
               }
-              
+
               JSONWebView(jsonString: formattedJSON)
                 .frame(minHeight: 250)
                 .background(Color(NSColor.controlBackgroundColor))
@@ -334,7 +377,8 @@ struct JSONView: View {
           ToolResultView(
             title: getResultTitle(),
             content: outputText,
-            canCopy: true)
+            canCopy: true
+          )
         }
       }
 
@@ -342,7 +386,7 @@ struct JSONView: View {
     }
     .padding(16)
   }
-  
+
   private func getResultTitle() -> String {
     switch lastOperation {
     case .validate:
@@ -364,6 +408,38 @@ struct JSONView: View {
     let result = jsonService.validateJSON(jsonString)
     isValidJSON = result.isValid
     validationMessage = result.errorMessage ?? ""
+  }
+
+  @MainActor
+  private func autoUpdateOutput() async {
+    // 避免在用户正在进行其他操作时自动更新
+    guard !isProcessing else { return }
+    
+    // 默认自动格式化有效的JSON
+    do {
+      let formatted = try jsonService.formatJSON(inputJSON)
+      formattedJSON = formatted
+      lastOperation = .format
+      
+      // 同时显示验证信息
+      let stats = calculateJSONStats(inputJSON)
+      outputText = """
+        ✅ JSON格式正确 (自动格式化)
+
+        统计信息:
+        • 字符数: \(stats.characterCount)
+        • 行数: \(stats.lineCount)
+        • 对象数: \(stats.objectCount)
+        • 数组数: \(stats.arrayCount)
+        • 字符串字段数: \(stats.stringCount)
+        • 数字字段数: \(stats.numberCount)
+        • 布尔字段数: \(stats.booleanCount)
+        """
+    } catch {
+      // 如果格式化失败，清空输出
+      formattedJSON = ""
+      outputText = ""
+    }
   }
 
   private func performOperation(_ operation: JSONOperation) {
@@ -395,12 +471,12 @@ struct JSONView: View {
           // 对于有效的JSON，显示格式化版本和统计信息
           let formatted = try jsonService.formatJSON(inputJSON)
           formattedJSON = formatted
-          
+
           // 计算统计信息
           let stats = calculateJSONStats(inputJSON)
           outputText = """
             ✅ JSON格式正确
-            
+
             统计信息:
             • 字符数: \(stats.characterCount)
             • 行数: \(stats.lineCount)
@@ -418,7 +494,8 @@ struct JSONView: View {
         result = try jsonService.generateModelCode(
           inputJSON,
           language: selectedLanguage,
-          className: className)
+          className: className
+        )
         outputText = result
       }
 
@@ -440,19 +517,19 @@ struct JSONView: View {
   @MainActor
   private func extractPaths() async {
     isProcessing = true
-    lastOperation = .validate // 用于路径提取显示
+    lastOperation = .validate  // 用于路径提取显示
 
     do {
       let paths = try jsonService.extractJSONPaths(inputJSON)
       let formatted = try jsonService.formatJSON(inputJSON)
       formattedJSON = formatted
-      
+
       outputText = """
         📍 提取的JSON路径 (共\(paths.count)个):
-        
+
         \(paths.joined(separator: "\n"))
         """
-      
+
       extractedPaths = paths
     } catch let error as ToolError {
       currentError = error
@@ -581,27 +658,28 @@ struct JSONView: View {
     extractedPaths = []
     lastOperation = .format
   }
-  
+
   private func copyToClipboard(_ text: String) {
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()
     pasteboard.setString(text, forType: .string)
   }
-  
+
   private func calculateJSONStats(_ jsonString: String) -> JSONStats {
     var stats = JSONStats()
     stats.characterCount = jsonString.count
     stats.lineCount = jsonString.components(separatedBy: .newlines).count
-    
+
     // Parse JSON to count elements
     if let data = jsonString.data(using: .utf8),
-       let jsonObject = try? JSONSerialization.jsonObject(with: data) {
+      let jsonObject = try? JSONSerialization.jsonObject(with: data)
+    {
       countJSONElements(jsonObject, stats: &stats)
     }
-    
+
     return stats
   }
-  
+
   private func countJSONElements(_ object: Any, stats: inout JSONStats) {
     switch object {
     case let dict as [String: Any]:
