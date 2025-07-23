@@ -174,44 +174,64 @@ struct JSONView: View {
         }
       }
 
-      // 输入区域
+      // 输入区域 - 占用所有可用空间
       if inputJSON.isEmpty {
-        EnhancedDropZone.forJSON(
-          onFilesDropped: { urls in
-            loadJSONFromFile(urls.first)
-          },
-          onButtonTapped: {
-            Task {
-              await openFileDialog()
-            }
-          })
+        VStack {
+          EnhancedDropZone.forJSON(
+            onFilesDropped: { urls in
+              loadJSONFromFile(urls.first)
+            },
+            onButtonTapped: {
+              Task {
+                await openFileDialog()
+              }
+            })
+          Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
         VStack(alignment: .leading, spacing: 8) {
-          ToolTextField(
-            title: "",
-            text: $inputJSON,
-            placeholder: "输入或粘贴JSON内容...",
-            minHeight: 200,
-            maxHeight: 600)
+          // 使用GeometryReader来获取可用空间
+          GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: 8) {
+              // 输入框占用除统计信息外的所有空间
+              ScrollView {
+                TextField("输入或粘贴JSON内容...", text: $inputJSON, axis: .vertical)
+                  .textFieldStyle(BrightTextFieldStyle())
+                  .lineLimit(nil)
+//                  .frame(minHeight: geometry.size.height - 30) // 减去统计信息的高度
+                  .frame(maxHeight: .infinity)
+              }
+              .background(Color(.controlBackgroundColor))
+              .clipShape(RoundedRectangle(cornerRadius: 8))
+              .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                  .stroke(Color(.separatorColor), lineWidth: 1.5))
+              .shadow(
+                color: Color.black.opacity(0.03),
+                radius: 2,
+                x: 0,
+                y: 1)
+              
+              // 统计信息
+              if !inputJSON.isEmpty {
+                HStack(spacing: 12) {
+                  Text("字符数: \(inputJSON.count)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
 
-          // 统计信息
-          if !inputJSON.isEmpty {
-            HStack(spacing: 12) {
-              Text("字符数: \(inputJSON.count)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                  Text("行数: \(inputJSON.components(separatedBy: .newlines).count)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
 
-              Text("行数: \(inputJSON.components(separatedBy: .newlines).count)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-
-              Spacer()
+                  Spacer()
+                }
+                .frame(height: 20) // 固定统计信息高度
+              }
             }
           }
         }
       }
-
-      Spacer()
     }
     .padding(16)
   }
