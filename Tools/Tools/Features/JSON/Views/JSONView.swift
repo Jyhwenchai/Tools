@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 struct JSONView: View {
   @State private var inputJSON: String = ""
   @State private var outputText: String = ""
+  @State private var formattedJSON: String = ""
   @State private var selectedLanguage: ProgrammingLanguage = .swift
   @State private var className: String = "Model"
   @State private var isValidJSON: Bool = true
@@ -20,6 +21,7 @@ struct JSONView: View {
   @State private var showingJSONPath: Bool = false
   @State private var extractedPaths: [String] = []
   @State private var selectedOperation: JSONOperation = .format
+  @State private var lastOperation: JSONOperation = .format
 
   private let jsonService = JSONService.shared
 
@@ -221,7 +223,7 @@ struct JSONView: View {
         .font(.headline)
         .foregroundStyle(.primary)
 
-      if outputText.isEmpty {
+      if outputText.isEmpty && formattedJSON.isEmpty {
         // 空状态
         VStack(spacing: 16) {
           Spacer()
@@ -243,15 +245,93 @@ struct JSONView: View {
         }
         .frame(maxWidth: .infinity)
       } else {
-        ToolResultView(
-          title: "处理结果",
-          content: outputText,
-          canCopy: true)
+        // 根据操作类型选择显示方式
+        if (lastOperation == .format || lastOperation == .minify) && !formattedJSON.isEmpty {
+          // 使用JSONWebView显示格式化的JSON
+          VStack(alignment: .leading, spacing: 12) {
+            HStack {
+              Text(lastOperation == .format ? "格式化结果" : "压缩结果")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+              
+              Spacer()
+              
+              Button("复制JSON") {
+                copyToClipboard(formattedJSON)
+              }
+              .buttonStyle(.borderless)
+              .font(.caption)
+              .foregroundStyle(.blue)
+            }
+            
+            JSONWebView(jsonString: formattedJSON)
+              .frame(minHeight: 300)
+              .background(Color(NSColor.controlBackgroundColor))
+              .cornerRadius(8)
+              .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                  .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+              )
+          }
+        } else if lastOperation == .validate && !formattedJSON.isEmpty && !outputText.isEmpty {
+          // 验证成功或路径提取时显示JSONWebView和信息
+          VStack(alignment: .leading, spacing: 16) {
+            // 信息显示
+            ToolResultView(
+              title: extractedPaths.isEmpty ? "验证结果" : "路径提取结果",
+              content: outputText,
+              canCopy: true)
+            
+            // JSON预览
+            VStack(alignment: .leading, spacing: 8) {
+              HStack {
+                Text("JSON预览")
+                  .font(.subheadline)
+                  .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                Button("复制JSON") {
+                  copyToClipboard(formattedJSON)
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .foregroundStyle(.blue)
+              }
+              
+              JSONWebView(jsonString: formattedJSON)
+                .frame(minHeight: 250)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(8)
+                .overlay(
+                  RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                )
+            }
+          }
+        } else if !outputText.isEmpty {
+          // 使用文本显示其他操作结果
+          ToolResultView(
+            title: getResultTitle(),
+            content: outputText,
+            canCopy: true)
+        }
       }
 
       Spacer()
     }
     .padding(16)
+  }
+  
+  private func getResultTitle() -> String {
+    switch lastOperation {
+    case .validate:
+      return "验证结果"
+    case .generateModel:
+      return "生成的\(selectedLanguage.rawValue)代码"
+    default:
+      return "处理结果"
+    }
   }
 
   private func validateJSONInput(_ jsonString: String) {
@@ -276,6 +356,8 @@ struct JSONView: View {
   private func processJSON(_ operation: JSONOperation) async {
     isProcessing = true
     outputText = ""
+    formattedJSON = ""
+    lastOperation = operation
 
     do {
       let result: String
@@ -283,19 +365,43 @@ struct JSONView: View {
       switch operation {
       case .format:
         result = try jsonService.formatJSON(inputJSON)
+        formattedJSON = result
       case .minify:
         result = try jsonService.minifyJSON(inputJSON)
+        formattedJSON = result
       case .validate:
         let validation = jsonService.validateJSON(inputJSON)
-        result = validation.isValid ? "JSON格式正确" : "JSON格式错误: \(validation.errorMessage ?? "")"
+        if validation.isValid {
+          // 对于有效的JSON，显示格式化版本和统计信息
+          let formatted = try jsonService.formatJSON(inputJSON)
+          formattedJSON = formatted
+          
+          // 计算统计信息
+          let stats = calculateJSONStats(inputJSON)
+          outputText = """
+            ✅ JSON格式正确
+            
+            统计信息:
+            • 字符数: \(stats.characterCount)
+            • 行数: \(stats.lineCount)
+            • 对象数: \(stats.objectCount)
+            • 数组数: \(stats.arrayCount)
+            • 字符串字段数: \(stats.stringCount)
+            • 数字字段数: \(stats.numberCount)
+            • 布尔字段数: \(stats.booleanCount)
+            """
+        } else {
+          result = "❌ JSON格式错误: \(validation.errorMessage ?? "")"
+          outputText = result
+        }
       case .generateModel:
         result = try jsonService.generateModelCode(
           inputJSON,
           language: selectedLanguage,
           className: className)
+        outputText = result
       }
 
-      outputText = result
     } catch let error as ToolError {
       currentError = error
     } catch {
@@ -314,14 +420,28 @@ struct JSONView: View {
   @MainActor
   private func extractPaths() async {
     isProcessing = true
+    lastOperation = .validate // 用于路径提取显示
 
     do {
       let paths = try jsonService.extractJSONPaths(inputJSON)
-      outputText = paths.joined(separator: "\n")
+      let formatted = try jsonService.formatJSON(inputJSON)
+      formattedJSON = formatted
+      
+      outputText = """
+        📍 提取的JSON路径 (共\(paths.count)个):
+        
+        \(paths.joined(separator: "\n"))
+        """
+      
+      extractedPaths = paths
     } catch let error as ToolError {
       currentError = error
+      formattedJSON = ""
+      outputText = ""
     } catch {
       currentError = ToolError.processingFailed(error.localizedDescription)
+      formattedJSON = ""
+      outputText = ""
     }
 
     isProcessing = false
@@ -330,19 +450,52 @@ struct JSONView: View {
   private func loadSampleJSON() {
     inputJSON = """
       {
+        "application": {
+          "name": "Tools",
+          "version": "2.0.0",
+          "platform": "macOS",
+          "features": [
+            {
+              "id": "json-processor",
+              "name": "JSON处理器",
+              "description": "强大的JSON格式化、验证和代码生成工具",
+              "enabled": true,
+              "settings": {
+                "autoFormat": true,
+                "showLineNumbers": true,
+                "theme": "dark"
+              }
+            },
+            {
+              "id": "encryption",
+              "name": "加密工具",
+              "description": "支持多种加密算法的安全工具",
+              "enabled": true,
+              "algorithms": ["AES", "RSA", "SHA256"]
+            }
+          ]
+        },
         "user": {
           "id": 12345,
-          "name": "张三",
-          "email": "zhangsan@example.com",
+          "name": "开发者",
+          "email": "developer@example.com",
           "isActive": true,
           "profile": {
             "age": 28,
             "city": "北京",
-            "skills": ["Swift", "iOS", "macOS"],
-            "experience": 5.5
+            "skills": ["Swift", "iOS", "macOS", "JSON"],
+            "experience": 5.5,
+            "projects": [
+              {
+                "name": "工具集",
+                "status": "active",
+                "technologies": ["SwiftUI", "WebKit"]
+              }
+            ]
           },
           "preferences": {
             "theme": "dark",
+            "language": "zh-CN",
             "notifications": {
               "email": true,
               "push": false,
@@ -352,8 +505,9 @@ struct JSONView: View {
         },
         "metadata": {
           "createdAt": "2025-01-15T10:30:00Z",
-          "updatedAt": "2025-01-18T14:45:30Z",
-          "version": "1.2.0"
+          "updatedAt": "2025-01-23T14:45:30Z",
+          "version": "1.2.0",
+          "buildNumber": 42
         }
       }
       """
@@ -400,11 +554,74 @@ struct JSONView: View {
   private func clearAll() {
     inputJSON = ""
     outputText = ""
+    formattedJSON = ""
     className = "Model"
     isValidJSON = true
     validationMessage = ""
     extractedPaths = []
+    lastOperation = .format
   }
+  
+  private func copyToClipboard(_ text: String) {
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    pasteboard.setString(text, forType: .string)
+  }
+  
+  private func calculateJSONStats(_ jsonString: String) -> JSONStats {
+    var stats = JSONStats()
+    stats.characterCount = jsonString.count
+    stats.lineCount = jsonString.components(separatedBy: .newlines).count
+    
+    // Parse JSON to count elements
+    if let data = jsonString.data(using: .utf8),
+       let jsonObject = try? JSONSerialization.jsonObject(with: data) {
+      countJSONElements(jsonObject, stats: &stats)
+    }
+    
+    return stats
+  }
+  
+  private func countJSONElements(_ object: Any, stats: inout JSONStats) {
+    switch object {
+    case let dict as [String: Any]:
+      stats.objectCount += 1
+      for (_, value) in dict {
+        countJSONElements(value, stats: &stats)
+      }
+    case let array as [Any]:
+      stats.arrayCount += 1
+      for item in array {
+        countJSONElements(item, stats: &stats)
+      }
+    case is String:
+      stats.stringCount += 1
+    case is NSNumber:
+      // Check if it's a boolean first
+      let number = object as! NSNumber
+      if CFBooleanGetTypeID() == CFGetTypeID(number) {
+        stats.booleanCount += 1
+      } else {
+        stats.numberCount += 1
+      }
+    case is Bool:
+      stats.booleanCount += 1
+    case is Int, is Double, is Float:
+      stats.numberCount += 1
+    default:
+      break
+    }
+  }
+}
+
+struct JSONStats {
+  var characterCount: Int = 0
+  var lineCount: Int = 0
+  var objectCount: Int = 0
+  var arrayCount: Int = 0
+  var stringCount: Int = 0
+  var numberCount: Int = 0
+  var booleanCount: Int = 0
 }
 
 #Preview {

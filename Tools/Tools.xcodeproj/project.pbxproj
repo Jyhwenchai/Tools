@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		18DD416D2E2B618B004DCB31 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 18DD416C2E2B618B004DCB31 /* SwiftUIIntrospect */; };
 		D546A9EC2E2F5C7900672512 /* CodeEditor in Frameworks */ = {isa = PBXBuildFile; productRef = D546A9EB2E2F5C7900672512 /* CodeEditor */; };
+		D546AA5B2E30674B00672512 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = D546AA5A2E30674B00672512 /* SwiftyJSON */; };
+		D546AA6F2E30709700672512 /* img in Resources */ = {isa = PBXBuildFile; fileRef = D546AA6E2E30709700672512 /* img */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +34,7 @@
 		D50BFA732E28E194002E3DB5 /* Tools.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tools.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D50BFA812E28E195002E3DB5 /* ToolsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ToolsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D50BFA8B2E28E195002E3DB5 /* ToolsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ToolsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D546AA6E2E30709700672512 /* img */ = {isa = PBXFileReference; lastKnownFileType = folder; path = img; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -57,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D546AA5B2E30674B00672512 /* SwiftyJSON in Frameworks */,
 				D546A9EC2E2F5C7900672512 /* CodeEditor in Frameworks */,
 				18DD416D2E2B618B004DCB31 /* SwiftUIIntrospect in Frameworks */,
 			);
@@ -82,6 +86,7 @@
 		D50BFA6A2E28E194002E3DB5 = {
 			isa = PBXGroup;
 			children = (
+				D546AA6E2E30709700672512 /* img */,
 				D50BFA752E28E194002E3DB5 /* Tools */,
 				D50BFA842E28E195002E3DB5 /* ToolsTests */,
 				D50BFA8E2E28E195002E3DB5 /* ToolsUITests */,
@@ -121,6 +126,7 @@
 			packageProductDependencies = (
 				18DD416C2E2B618B004DCB31 /* SwiftUIIntrospect */,
 				D546A9EB2E2F5C7900672512 /* CodeEditor */,
+				D546AA5A2E30674B00672512 /* SwiftyJSON */,
 			);
 			productName = Tools;
 			productReference = D50BFA732E28E194002E3DB5 /* Tools.app */;
@@ -207,6 +213,7 @@
 			packageReferences = (
 				18DD416B2E2B618B004DCB31 /* XCRemoteSwiftPackageReference "swiftui-introspect" */,
 				D546A9EA2E2F5C7900672512 /* XCRemoteSwiftPackageReference "CodeEditor" */,
+				D546AA592E30674B00672512 /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D50BFA742E28E194002E3DB5 /* Products */;
@@ -225,6 +232,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D546AA6F2E30709700672512 /* img in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -588,6 +596,14 @@
 				minimumVersion = 1.2.6;
 			};
 		};
+		D546AA592E30674B00672512 /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -600,6 +616,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D546A9EA2E2F5C7900672512 /* XCRemoteSwiftPackageReference "CodeEditor" */;
 			productName = CodeEditor;
+		};
+		D546AA5A2E30674B00672512 /* SwiftyJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D546AA592E30674B00672512 /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
+			productName = SwiftyJSON;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

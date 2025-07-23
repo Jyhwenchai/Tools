@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Viewer</title>
+  <link rel="stylesheet" href="jsoneditor.min.css">
+  <style>
+    html,
+    body,
+    #jsoneditor {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: monospace;
+    }
+
+    /* ✅ 自定义折叠/展开符号 */
+    .jsoneditor .jsoneditor-expandable>.jsoneditor-field:before,
+    .jsoneditor .jsoneditor-expandable>.jsoneditor-value:before {
+      content: "+";
+      display: inline-block;
+      width: 12px;
+      color: #555;
+      font-weight: bold;
+      font-family: monospace;
+    }
+
+    .jsoneditor .jsoneditor-expanded>.jsoneditor-field:before,
+    .jsoneditor .jsoneditor-expanded>.jsoneditor-value:before {
+      content: "-";
+      color: #555;
+      font-weight: bold;
+    }
+
+    /* 错误状态样式 */
+    .jsoneditor-error {
+      background-color: #ffe6e6 !important;
+      border: 1px solid #ff9999 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="jsoneditor"></div>
+  <script src="jsoneditor.min.js"></script>
+  <script>
+    const container = document.getElementById("jsoneditor");
+    const options = {
+      mode: "view",        // ✅ 使用tree模式支持展开/折叠
+      // modes: ['code', 'form', 'text', 'tree', 'view', 'preview'], // allowed modes
+      mainMenuBar: true,   // ✅ 显示菜单（可选择全展开/全折叠）
+      navigationBar: false,
+      statusBar: false
+    };
+    const editor = new JSONEditor(container, options);
+    function setJSON(json) {
+      try {
+        // 移除错误样式
+        container.classList.remove('jsoneditor-error');
+
+        if (typeof json === 'string') {
+          json = JSON.parse(json);
+        }
+
+        editor.set(json);
+
+        // 默认展开第一层
+        editor.expandAll();
+
+      } catch (e) {
+        console.error("Invalid JSON", e);
+
+        // 添加错误样式
+        container.classList.add('jsoneditor-error');
+
+        // 显示错误信息
+        editor.set({
+          "错误": "JSON 格式不正确",
+          "详细信息": e.message || "未知错误"
+        });
+      }
+    }
+
+    // 初始化时设置空对象
+    editor.set({});
+  </script>
+</body>
+
+</html>

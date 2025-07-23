@@ -24,16 +24,11 @@ class JSONService {
     }
 
     do {
-      let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-      let formattedData = try JSONSerialization.data(
-        withJSONObject: jsonObject,
-        options: [.prettyPrinted, .sortedKeys])
-
-      guard let formattedString = String(data: formattedData, encoding: .utf8) else {
-        throw ToolError.processingFailed("格式化结果转换失败")
-      }
-
-      return formattedString
+      // First validate the JSON
+      _ = try JSONSerialization.jsonObject(with: data, options: [])
+      
+      // Use custom formatting to preserve original string content
+      return try formatJSONPreservingStrings(jsonString)
     } catch let error as NSError {
       throw ToolError.invalidInput("JSON格式错误: \(error.localizedDescription)")
     }
@@ -49,14 +44,11 @@ class JSONService {
     }
 
     do {
-      let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-      let minifiedData = try JSONSerialization.data(withJSONObject: jsonObject, options: [])
-
-      guard let minifiedString = String(data: minifiedData, encoding: .utf8) else {
-        throw ToolError.processingFailed("压缩结果转换失败")
-      }
-
-      return minifiedString
+      // First validate the JSON
+      _ = try JSONSerialization.jsonObject(with: data, options: [])
+      
+      // Use custom minification to preserve original string content
+      return try minifyJSONPreservingStrings(jsonString)
     } catch let error as NSError {
       throw ToolError.invalidInput("JSON格式错误: \(error.localizedDescription)")
     }
@@ -126,6 +118,126 @@ class JSONService {
     } catch let error as NSError {
       throw ToolError.invalidInput("JSON格式错误: \(error.localizedDescription)")
     }
+  }
+}
+
+// MARK: - Private JSON Formatting Methods
+
+private extension JSONService {
+  func formatJSONPreservingStrings(_ jsonString: String) throws -> String {
+    var result = ""
+    var indentLevel = 0
+    var insideString = false
+    var escapeNext = false
+    var i = jsonString.startIndex
+    
+    while i < jsonString.endIndex {
+      let char = jsonString[i]
+      
+      if escapeNext {
+        result.append(char)
+        escapeNext = false
+        i = jsonString.index(after: i)
+        continue
+      }
+      
+      if char == "\\" && insideString {
+        result.append(char)
+        escapeNext = true
+        i = jsonString.index(after: i)
+        continue
+      }
+      
+      if char == "\"" {
+        insideString.toggle()
+        result.append(char)
+        i = jsonString.index(after: i)
+        continue
+      }
+      
+      if insideString {
+        result.append(char)
+        i = jsonString.index(after: i)
+        continue
+      }
+      
+      // Handle formatting outside of strings
+      switch char {
+      case "{":
+        result.append("{\n")
+        indentLevel += 1
+        result.append(String(repeating: "  ", count: indentLevel))
+      case "}":
+        if result.hasSuffix("  ") {
+          result = String(result.dropLast(2))
+        }
+        if result.hasSuffix("\n") {
+          result = String(result.dropLast())
+        }
+        indentLevel = max(0, indentLevel - 1)
+        result.append("\n" + String(repeating: "  ", count: indentLevel) + "}")
+      case "[":
+        result.append("[\n")
+        indentLevel += 1
+        result.append(String(repeating: "  ", count: indentLevel))
+      case "]":
+        if result.hasSuffix("  ") {
+          result = String(result.dropLast(2))
+        }
+        if result.hasSuffix("\n") {
+          result = String(result.dropLast())
+        }
+        indentLevel = max(0, indentLevel - 1)
+        result.append("\n" + String(repeating: "  ", count: indentLevel) + "]")
+      case ":":
+        result.append(": ")
+      case ",":
+        result.append(",\n" + String(repeating: "  ", count: indentLevel))
+      case " ", "\t", "\n", "\r":
+        // Skip whitespace outside strings
+        break
+      default:
+        result.append(char)
+      }
+      
+      i = jsonString.index(after: i)
+    }
+    
+    return result
+  }
+  
+  func minifyJSONPreservingStrings(_ jsonString: String) throws -> String {
+    var result = ""
+    var insideString = false
+    var escapeNext = false
+    
+    for char in jsonString {
+      if escapeNext {
+        result.append(char)
+        escapeNext = false
+        continue
+      }
+      
+      if char == "\\" && insideString {
+        result.append(char)
+        escapeNext = true
+        continue
+      }
+      
+      if char == "\"" {
+        insideString.toggle()
+        result.append(char)
+        continue
+      }
+      
+      if insideString {
+        result.append(char)
+      } else if !char.isWhitespace {
+        result.append(char)
+      }
+    }
+    
+    return result
   }
 }
 
