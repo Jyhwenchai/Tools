@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Pre-Completion Build Check",
+  "description": "Automatically compile the project before completing any task to ensure code quality and deliverability",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "Tools/Tools/**/*.swift",
+      "Tools/Tools.xcodeproj/project.pbxproj",
+      "*.swift"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A Swift file or project configuration has been modified. Before marking any task as complete, please compile the project to ensure it builds successfully. Run the build process and verify there are no compilation errors. Only proceed with task completion if the build passes successfully. If there are build errors, fix them first before considering the task complete."
+  }
+}
