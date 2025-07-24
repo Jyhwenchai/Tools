@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Task Documentation Generator",
+  "description": "Monitors Swift source files for changes and generates or updates implementation documentation in markdown format, storing it in the 'task-docs' directory. Creates new documentation for new features and updates existing documentation when features are modified.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "Tools/Tools/Features/**/*.swift",
+      "Tools/Tools/Core/**/*.swift",
+      "Tools/Tools/Shared/**/*.swift",
+      "Tools/Tools/*.swift"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A Swift source file has been modified. Please analyze the changes and:\n\n1. If this represents a new feature implementation, create a new markdown document in the 'task-docs' directory describing the implementation details, architecture decisions, key components, and usage patterns.\n\n2. If this modifies an existing feature significantly, update the corresponding documentation in the 'task-docs' directory to reflect the changes.\n\n3. For bug fixes or minor changes, only update documentation if there are major changes to the feature's behavior or architecture.\n\n4. Ensure all documentation follows markdown format and includes:\n   - Feature overview and purpose\n   - Key implementation details\n   - Architecture and design decisions\n   - Important code components and their roles\n   - Usage examples if applicable\n   - Any dependencies or integration points\n\nFocus on documenting the \"what\" and \"why\" of the implementation, not just the \"how\". Keep documentation current and accurate."
+  }
+}
