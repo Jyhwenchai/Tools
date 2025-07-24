@@ -22,6 +22,8 @@ struct JSONView: View {
   @State private var extractedPaths: [String] = []
   @State private var selectedOperation: JSONOperation = .format
   @State private var lastOperation: JSONOperation = .format
+  @State private var isDragTargeted: Bool = false
+  @State private var dragFeedbackMessage: String = ""
 
   private let jsonService = JSONService.shared
 
@@ -174,7 +176,16 @@ struct JSONView: View {
         Text("JSON输入")
           .font(.headline)
           .foregroundStyle(.primary)
-
+        // 文件操作按钮
+        Button("选择文件") {
+          Task {
+            await openFileDialog()
+          }
+        }
+        .buttonStyle(.borderless)
+        .font(.body)
+        .foregroundStyle(.blue)
+        
         Spacer()
 
         // 实时验证状态
@@ -196,14 +207,24 @@ struct JSONView: View {
         // 输入框占用除统计信息和文件操作按钮外的所有空间
         ScrollView {
           TextEditor(text: $inputJSON)
+            .scrollContentBackground(.hidden)
             .padding(.top, 10)
             .overlay(alignment: .topLeading) {
               if inputJSON.isEmpty {
-                Text("输入或粘贴JSON内容...")
-                  .foregroundColor(.secondary)
-                  .padding(.horizontal, 4)
-                  .padding(.vertical, 8)
-                  .allowsHitTesting(false)
+                VStack(alignment: .leading, spacing: 8) {
+                  Text("输入或粘贴JSON内容 或 拖拽文本文件到此处...")
+                    .foregroundColor(.secondary)
+
+                  if isDragTargeted {
+                    Text(dragFeedbackMessage)
+                      .font(.caption)
+                      .foregroundColor(.blue)
+                      .padding(.top, 4)
+                  }
+                }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 8)
+                .allowsHitTesting(false)
               }
             }
             .lineLimit(nil)
@@ -215,11 +236,20 @@ struct JSONView: View {
             )
         }
         .frame(minHeight: 300, maxHeight: .infinity)
-        .background(Color(.controlBackgroundColor))
+        .background(
+          isDragTargeted
+            ? Color.blue.opacity(0.1)
+            : Color(.controlBackgroundColor)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
           RoundedRectangle(cornerRadius: 8)
-            .stroke(Color(.separatorColor), lineWidth: 1.5)
+            .stroke(
+              isDragTargeted
+                ? Color.blue.opacity(0.5)
+                : Color(.separatorColor),
+              lineWidth: isDragTargeted ? 2 : 1.5
+            )
         )
         .shadow(
           color: Color.black.opacity(0.03),
@@ -227,18 +257,11 @@ struct JSONView: View {
           x: 0,
           y: 1
         )
-        .onDrop(of: [.json, .plainText], isTargeted: nil) { providers in
-          // 处理拖拽文件
-          guard let provider = providers.first else { return false }
-
-          _ = provider.loadObject(ofClass: URL.self) { url, _ in
-            if let url = url {
-              DispatchQueue.main.async {
-                loadJSONFromFile(url)
-              }
-            }
-          }
-          return true
+        .onDrop(
+          of: [.fileURL],
+          isTargeted: $isDragTargeted
+        ) { providers in
+          handleFileDrop(providers: providers)
         }
 
         // 底部操作区域
@@ -257,16 +280,6 @@ struct JSONView: View {
           }
 
           Spacer()
-
-          // 文件操作按钮
-          Button("从文件加载") {
-            Task {
-              await openFileDialog()
-            }
-          }
-          .buttonStyle(.borderless)
-          .font(.caption)
-          .foregroundStyle(.blue)
         }
         .frame(height: 20)  // 固定底部区域高度
       }
@@ -331,7 +344,9 @@ struct JSONView: View {
                   .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
               )
           }
-        } else if lastOperation == .minify && !formattedJSON.isEmpty && !outputText.isEmpty {
+        } else if lastOperation == .minify && !formattedJSON.isEmpty
+          && !outputText.isEmpty
+        {
           // 压缩操作：显示统计信息和压缩后的JSON
           VStack(alignment: .leading, spacing: 16) {
             // 压缩统计信息
@@ -340,7 +355,7 @@ struct JSONView: View {
               content: outputText,
               canCopy: true
             )
-            
+
             ToolResultView(
               title: "压缩后的JSON",
               content: formattedJSON,
@@ -428,13 +443,13 @@ struct JSONView: View {
   private func autoUpdateOutput() async {
     // 避免在用户正在进行其他操作时自动更新
     guard !isProcessing else { return }
-    
+
     // 默认自动格式化有效的JSON
     do {
       let formatted = try jsonService.formatJSON(inputJSON)
       formattedJSON = formatted
       lastOperation = .format
-      
+
       // 同时显示验证信息
       let stats = calculateJSONStats(inputJSON)
       outputText = """
@@ -636,35 +651,19 @@ struct JSONView: View {
 
   private func loadJSONFromFile(_ url: URL?) {
     guard let url else { return }
-
-    Task {
-      do {
-        // Validate file size (max 10MB for JSON)
-        if !FileDialogUtils.validateFileSize(url, maxSize: 10 * 1024 * 1024) {
-          await MainActor.run {
-            currentError = .fileTooLarge(10 * 1024 * 1024)
-          }
-          return
-        }
-
-        let content = try String(contentsOf: url, encoding: .utf8)
-        await MainActor.run {
-          inputJSON = content
-        }
-      } catch {
-        await MainActor.run {
-          currentError = .fileNotFound(url.lastPathComponent)
-        }
-      }
-    }
+    loadTextFromFile(url)
   }
 
   private func openFileDialog() async {
+    let supportedTypes: [UTType] = [
+      .json, .plainText, .text, .xml,
+    ]
+
     if let url = await FileDialogUtils.showEnhancedOpenDialog(
-      allowedTypes: [.json, .plainText],
-      message: "选择要处理的JSON文件",
+      allowedTypes: supportedTypes,
+      message: "选择要处理的文本文件 (支持JSON、TXT、XML、LOG、CSV等格式)",
       allowMultiple: false,
-      title: "选择JSON文件"
+      title: "选择文本文件"
     ).first {
       await MainActor.run {
         loadJSONFromFile(url)
@@ -687,6 +686,130 @@ struct JSONView: View {
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()
     pasteboard.setString(text, forType: .string)
+  }
+
+  // MARK: - File Drop Handling
+
+  private func handleFileDrop(providers: [NSItemProvider]) -> Bool {
+    guard let provider = providers.first else { return false }
+
+    // Update drag feedback
+    updateDragFeedback(for: provider)
+    // Handle file URL
+    if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+      _ = provider.loadObject(ofClass: URL.self) { url, _ in
+        if let url = url {
+          DispatchQueue.main.async {
+            self.loadTextFromFile(url)
+          }
+        }
+      }
+      return true
+    }
+
+    // Handle direct text content
+    if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+      _ = provider.loadObject(ofClass: String.self) { text, _ in
+        if let text = text {
+          DispatchQueue.main.async {
+            self.inputJSON = text
+          }
+        }
+      }
+      return true
+    }
+
+    return false
+  }
+
+  private func updateDragFeedback(for provider: NSItemProvider) {
+    if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+      // 检查是否为JSON文件
+      if provider.hasItemConformingToTypeIdentifier(UTType.json.identifier) {
+        dragFeedbackMessage = "�放 释放以加载JSON文件"
+      } else {
+        dragFeedbackMessage = "📄 释放以读取文件内容"
+      }
+    } else if provider.hasItemConformingToTypeIdentifier(
+      UTType.plainText.identifier
+    ) {
+      dragFeedbackMessage = "📝 释放以粘贴文本内容"
+    } else if provider.hasItemConformingToTypeIdentifier(UTType.json.identifier)
+    {
+      dragFeedbackMessage = "📋 释放以加载JSON内容"
+    } else {
+      dragFeedbackMessage = "⚠️ 不支持的文件类型"
+    }
+  }
+
+  private func loadTextFromFile(_ url: URL) {
+    Task {
+      do {
+        // 检查文件大小 (最大 50MB)
+        if !FileDialogUtils.validateFileSize(url, maxSize: 50 * 1024 * 1024) {
+          await MainActor.run {
+            currentError = .fileTooLarge(50 * 1024 * 1024)
+          }
+          return
+        }
+
+        // 检查文件类型
+        let fileExtension = url.pathExtension.lowercased()
+        let supportedExtensions = [
+          "json", "txt", "log", "csv", "yml", "yaml",
+          "js", "html", "css", "md", "conf", "config",
+          "ini", "xml", "text",
+        ]
+
+        let isSupported =
+          supportedExtensions.contains(fileExtension) || fileExtension.isEmpty
+
+        if !isSupported {
+          await MainActor.run {
+            currentError = .invalidInput("不支持的文件类型: .\(fileExtension)")
+          }
+          return
+        }
+
+        // 尝试读取文件内容
+        let content = try String(contentsOf: url, encoding: .utf8)
+
+        await MainActor.run {
+          inputJSON = content
+
+          // 检查是否为有效JSON并提供反馈
+          let validation = jsonService.validateJSON(content)
+          if validation.isValid {
+            // 如果是有效JSON，显示成功消息
+            let fileName = url.lastPathComponent
+            let fileSize = FileDialogUtils.getFileSize(url)
+            outputText = """
+              ✅ 已成功加载文件: \(fileName)
+              📊 文件大小: \(fileSize)
+              📝 内容类型: JSON (格式正确)
+
+              文件已加载到输入区域，可以开始处理。
+              """
+          } else {
+            // 如果不是有效JSON，也显示加载信息
+            let fileName = url.lastPathComponent
+            let fileSize = FileDialogUtils.getFileSize(url)
+            outputText = """
+              📄 已加载文件: \(fileName)
+              📊 文件大小: \(fileSize)
+              ⚠️ 内容类型: 文本文件 (非JSON格式)
+
+              提示: 如果这是JSON文件，请检查格式是否正确。
+              """
+          }
+        }
+
+      } catch {
+        await MainActor.run {
+          currentError = .fileNotFound(url.lastPathComponent)
+        }
+      }
+    }
   }
 
   private func calculateJSONStats(_ jsonString: String) -> JSONStats {

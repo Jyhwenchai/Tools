@@ -1,0 +1,27 @@
+{
+  "name": "JSON拖拽测试",
+  "version": "1.0.0",
+  "description": "用于测试JSON文件拖拽功能的示例文件",
+  "features": [
+    "拖拽文件加载",
+    "JSON格式验证",
+    "文件信息显示"
+  ],
+  "settings": {
+    "autoFormat": true,
+    "showLineNumbers": true,
+    "maxFileSize": "50MB"
+  },
+  "testData": {
+    "numbers": [1, 2, 3, 4, 5],
+    "boolean": true,
+    "nullValue": null,
+    "nested": {
+      "level1": {
+        "level2": {
+          "message": "深层嵌套测试"
+        }
+      }
+    }
+  }
+}
