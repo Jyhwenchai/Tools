@@ -10,7 +10,6 @@ import Foundation
 enum JSONOperation: String, CaseIterable, Identifiable {
   case format = "格式化"
   case minify = "压缩"
-  case validate = "验证"
   case generateModel = "生成代码"
 
   var id: String { rawValue }
@@ -21,8 +20,6 @@ enum JSONOperation: String, CaseIterable, Identifiable {
       "格式化JSON，使其更易读"
     case .minify:
       "压缩JSON，移除空格和换行"
-    case .validate:
-      "验证JSON格式是否正确"
     case .generateModel:
       "根据JSON生成模型代码"
     }
