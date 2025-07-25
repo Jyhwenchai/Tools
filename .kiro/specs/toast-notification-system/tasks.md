@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Create Toast data models and types
+- [x] 1. Create Toast data models and types
 
   - Create ToastType enum with success, error, warning, and info cases
   - Implement icon and color properties for each toast type

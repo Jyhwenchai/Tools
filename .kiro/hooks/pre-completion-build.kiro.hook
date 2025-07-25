@@ -1,10 +1,10 @@
 {
   "enabled": true,
-  "name": "Pre-Completion Build Check",
-  "description": "Automatically compile the project before completing any task to ensure code quality and deliverability",
+  "name": "Build Check",
+  "description": "当Session中的执行任务完成进行编译检查，如果有错误则修复错误然后重新编译知道编译通过",
   "version": "1",
   "when": {
-    "type": "fileEdited",
+    "type": "userTriggered",
     "patterns": [
       "Tools/Tools/**/*.swift",
       "Tools/Tools.xcodeproj/project.pbxproj",
@@ -13,6 +13,6 @@
   },
   "then": {
     "type": "askAgent",
-    "prompt": "A Swift file or project configuration has been modified. Before marking any task as complete, please compile the project to ensure it builds successfully. Run the build process and verify there are no compilation errors. Only proceed with task completion if the build passes successfully. If there are build errors, fix them first before considering the task complete."
+    "prompt": "当Session中的执行任务完成进行编译检查，如果有错误则修复错误然后重新编译直到编译通过结束掉本次 Session"
   }
 }
