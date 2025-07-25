@@ -46,7 +46,7 @@ struct ClipboardManagerView: View {
       setupClipboardService()
     }
     .onDisappear {
-      clipboardService?.stopMonitoring()
+      // Simplified monitoring - no cleanup needed
     }
   }
 
@@ -68,6 +68,7 @@ struct ClipboardManagerView: View {
     }
     .navigationTitle("剪贴板管理")
     .listStyle(.sidebar)
+    .padding(.top, 12)
     .frame(minWidth: 200)
   }
 

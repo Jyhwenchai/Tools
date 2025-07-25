@@ -8,6 +8,9 @@ struct ClipboardView: View {
   @State private var selectedType: ClipboardItemType?
   @State private var showingClearAlert = false
   @State private var filteredItems: [ClipboardItem] = []
+  @State private var manualInputText = ""
+  @State private var showingManualInput = false
+  @State private var updateTimer: Timer?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -34,6 +37,8 @@ struct ClipboardView: View {
     }
     .onDisappear {
       clipboardService?.stopMonitoring()
+      updateTimer?.invalidate()
+      updateTimer = nil
     }
     .alert("清空历史记录", isPresented: $showingClearAlert) {
       Button("取消", role: .cancel) {}
@@ -65,23 +70,18 @@ struct ClipboardView: View {
       Spacer()
 
       HStack(spacing: 12) {
-        // Monitoring Toggle
-        if let service = clipboardService {
+        // Manual Capture Button
+        if clipboardService != nil {
           Button(action: {
-            if service.isMonitoring {
-              service.stopMonitoring()
-            } else {
-              Task {
-                await service.startMonitoring()
-              }
-            }
+            clipboardService?.pasteFromSystemClipboard()
+            updateFilteredItems()
           }) {
             HStack(spacing: 6) {
-              Image(systemName: service.isMonitoring ? "pause.circle.fill" : "play.circle.fill")
-              Text(service.isMonitoring ? "暂停监控" : "开始监控")
+              Image(systemName: "plus.circle.fill")
+              Text("手动捕获")
             }
             .font(.caption)
-            .foregroundColor(service.isMonitoring ? .orange : .green)
+            .foregroundColor(.green)
           }
           .buttonStyle(.plain)
         }
@@ -167,8 +167,11 @@ struct ClipboardView: View {
         .font(.caption)
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .background(selectedType != nil ? Color.accentColor
-          .opacity(0.1) : Color(NSColor.controlBackgroundColor))
+        .background(
+          selectedType != nil
+            ? Color.accentColor
+              .opacity(0.1) : Color(NSColor.controlBackgroundColor)
+        )
         .cornerRadius(6)
       }
       .menuStyle(.borderlessButton)
@@ -191,7 +194,7 @@ struct ClipboardView: View {
           .font(.headline)
 
         if searchText.isEmpty, selectedType == nil {
-          Text("开始监控后，复制的内容将自动保存到这里")
+          Text("点击手动捕获按钮来保存当前剪贴板内容")
             .font(.caption)
             .foregroundColor(.secondary)
             .multilineTextAlignment(.center)
@@ -202,12 +205,9 @@ struct ClipboardView: View {
         }
       }
 
-      if let service = clipboardService, !service.isMonitoring, searchText.isEmpty,
-         selectedType == nil {
-        Button("开始监控") {
-          Task {
-            await service.startMonitoring()
-          }
+      if clipboardService != nil, searchText.isEmpty, selectedType == nil {
+        Button("刷新历史记录") {
+          updateFilteredItems()
         }
         .buttonStyle(.borderedProminent)
       }
@@ -244,9 +244,9 @@ struct ClipboardView: View {
     clipboardService = ClipboardService(modelContext: modelContext)
     updateFilteredItems()
 
-    // Start monitoring asynchronously
-    Task {
-      await clipboardService?.startMonitoring()
+    // Set up timer to periodically update the UI
+    updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+      updateFilteredItems()
     }
   }
 
@@ -282,7 +282,7 @@ struct ClipboardViewPreview: PreviewProvider {
     let sampleItems = [
       ClipboardItem(content: "Hello World"),
       ClipboardItem(content: "https://www.apple.com"),
-      ClipboardItem(content: "func test() { return true }")
+      ClipboardItem(content: "func test() { return true }"),
     ]
 
     for item in sampleItems {

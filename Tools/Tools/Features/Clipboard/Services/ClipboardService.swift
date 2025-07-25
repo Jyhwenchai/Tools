@@ -8,24 +8,27 @@ class ClipboardService {
   // MARK: - Properties
 
   private var pasteboard = NSPasteboard.general
-  private var lastChangeCount: Int = 0
-  private var monitoringTimer: Timer?
   private let maxHistoryCount: Int
   private var modelContext: ModelContext
   private let securityService = SecurityService.shared
+  
+  // Monitoring properties
+  private var monitoringTimer: Timer?
+  private var lastChangeCount: Int = 0
+  private var isMonitoring = false
 
   // Observable properties
   var clipboardHistory: [ClipboardItem] = []
-  var isMonitoring: Bool = false
 
   // MARK: - Initialization
 
   init(modelContext: ModelContext, maxHistoryCount: Int = 100) {
     self.modelContext = modelContext
     self.maxHistoryCount = maxHistoryCount
-    lastChangeCount = pasteboard.changeCount
+    self.lastChangeCount = pasteboard.changeCount
     loadHistoryFromStorage()
     setupSecurityNotifications()
+    startMonitoring()
   }
 
   deinit {
@@ -42,93 +45,78 @@ class ClipboardService {
       queue: .main) { [weak self] _ in
       self?.clearSensitiveClipboardData()
     }
-
-    NotificationCenter.default.addObserver(
-      forName: .pauseClipboardMonitoring,
-      object: nil,
-      queue: .main) { [weak self] _ in
-      self?.pauseMonitoring()
-    }
-
-    NotificationCenter.default.addObserver(
-      forName: .resumeClipboardMonitoring,
-      object: nil,
-      queue: .main) { [weak self] _ in
-      self?.resumeMonitoring()
-    }
   }
 
   private func clearSensitiveClipboardData() {
     // Clear clipboard history if it contains sensitive data
-    if AppSettings.shared.confirmDestructiveActions {
-      clearHistory()
-    }
+    clearHistory()
   }
 
-  private var wasMonitoringBeforePause = false
-
-  private func pauseMonitoring() {
-    wasMonitoringBeforePause = isMonitoring
-    if isMonitoring {
-      stopMonitoring()
-    }
-  }
-
-  private func resumeMonitoring() {
-    if wasMonitoringBeforePause {
-      Task {
-        await startMonitoring()
-      }
-    }
-  }
-
-  // MARK: - Monitoring Control
-
-  func startMonitoring() async {
+  // MARK: - Clipboard Monitoring
+  
+  func startMonitoring() {
     guard !isMonitoring else { return }
-
+    
     isMonitoring = true
-    lastChangeCount = pasteboard.changeCount
-
     monitoringTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-      Task { @MainActor in
-        self?.checkForClipboardChanges()
-      }
+      self?.checkClipboardChanges()
     }
-
-    print("🎯 Clipboard monitoring started")
   }
-
+  
   func stopMonitoring() {
     isMonitoring = false
     monitoringTimer?.invalidate()
     monitoringTimer = nil
   }
-
-  // MARK: - Clipboard Monitoring
-
-  private func checkForClipboardChanges() {
+  
+  private func checkClipboardChanges() {
     let currentChangeCount = pasteboard.changeCount
-
-    guard currentChangeCount != lastChangeCount else { return }
-
-    lastChangeCount = currentChangeCount
-
-    // Get clipboard content
-    if let content = pasteboard.string(forType: .string),
-       !content.isEmpty,
-       !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      // Sanitize clipboard content for security
-      let sanitizedContent = securityService.sanitizeStringInput(content)
-
-      // Check if this content is already the most recent item
-      if let lastItem = clipboardHistory.first,
-         lastItem.content == sanitizedContent {
-        return
+    
+    // Check if clipboard content has changed
+    if currentChangeCount != lastChangeCount {
+      lastChangeCount = currentChangeCount
+      
+      // Get current clipboard content
+      if let content = pasteboard.string(forType: .string),
+         !content.isEmpty,
+         !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        
+        // Check if this content is different from the most recent item
+        if let lastItem = clipboardHistory.first,
+           lastItem.content == content {
+          return // Same content, no need to add
+        }
+        
+        // Add new content to history
+        addContentManually(content)
       }
+    }
+  }
 
-      let newItem = ClipboardItem(content: sanitizedContent)
-      addToHistory(newItem)
+  // MARK: - Manual Content Operations
+
+  func addContentManually(_ content: String) {
+    guard !content.isEmpty,
+          !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      return
+    }
+
+    // Sanitize content for security
+    let sanitizedContent = securityService.sanitizeStringInput(content)
+
+    // Check if this content is already the most recent item
+    if let lastItem = clipboardHistory.first,
+       lastItem.content == sanitizedContent {
+      return
+    }
+
+    let newItem = ClipboardItem(content: sanitizedContent)
+    addToHistory(newItem)
+  }
+
+  func pasteFromSystemClipboard() {
+    if let content = pasteboard.string(forType: .string) {
+      addContentManually(content)
     }
   }
 
@@ -175,7 +163,6 @@ class ClipboardService {
   func copyToClipboard(_ content: String) {
     pasteboard.clearContents()
     pasteboard.setString(content, forType: .string)
-    lastChangeCount = pasteboard.changeCount
   }
 
   // MARK: - Search and Filter

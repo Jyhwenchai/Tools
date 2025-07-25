@@ -53,6 +53,11 @@ xcodebuild -project Tools.xcodeproj -scheme Tools -destination 'platform=macOS' 
 3. **Settings** can be accessed to customize behavior and appearance
 4. **All processing** happens locally - no data leaves your device
 
+### 📚 Detailed Documentation
+For comprehensive usage guides and feature documentation, see the [docs](docs/) directory:
+- [📋 Clipboard Manager Guide](docs/features/clipboard-manager.md)
+- [Complete Feature Documentation](docs/README.md)
+
 ### Tool-Specific Features
 
 #### Encryption Tool

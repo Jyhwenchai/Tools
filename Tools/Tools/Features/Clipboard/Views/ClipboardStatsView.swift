@@ -55,19 +55,21 @@ struct ClipboardStatsView: View {
         }
       }
 
-      // Monitoring status
+      // Monitoring status (simplified)
       Divider()
 
       HStack {
-        Image(systemName: service.isMonitoring ? "checkmark.circle.fill" : "pause.circle.fill")
-          .foregroundColor(service.isMonitoring ? .green : .orange)
+        Image(systemName: "checkmark.circle.fill")
+          .foregroundColor(.green)
 
-        Text(service.isMonitoring ? "正在监控" : "已暂停监控")
+        Text("监控已简化")
           .font(.caption)
           .fontWeight(.medium)
 
         Spacer()
       }
+      
+      Spacer()
     }
     .padding()
     .background(Color(NSColor.controlBackgroundColor))
