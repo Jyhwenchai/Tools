@@ -23,31 +23,31 @@ struct QRCodeView: View {
   // 错误处理
   @State private var errorMessage: String?
   @State private var showingError = false
+  
+  // 操作成功提示
+  @State private var successMessage: String?
+  @State private var showingSuccess = false
 
   // MARK: - Body
 
   var body: some View {
     VStack(spacing: 0) {
-      // 标签页选择器
-      tabSelector
+      // 自定义标签页选择器
+      customTabSelector
 
       Divider()
 
       // 主内容区域
-      TabView(selection: $selectedTab) {
-        generateView
-          .tabItem {
-            Label("生成", systemImage: "qrcode")
-          }
-          .tag(QRCodeTab.generate)
-
-        recognizeView
-          .tabItem {
-            Label("识别", systemImage: "qrcode.viewfinder")
-          }
-          .tag(QRCodeTab.recognize)
+      Group {
+        switch selectedTab {
+        case .generate:
+          generateView
+        case .recognize:
+          recognizeView
+        }
       }
-      .tabViewStyle(.automatic)
+      .animation(.easeInOut(duration: 0.2), value: selectedTab)
+      Spacer()
     }
     .navigationTitle("二维码工具")
     .alert("错误", isPresented: $showingError) {
@@ -55,31 +55,58 @@ struct QRCodeView: View {
     } message: {
       Text(errorMessage ?? "未知错误")
     }
+    .alert("成功", isPresented: $showingSuccess) {
+    } message: {
+      Text(successMessage ?? "操作成功")
+    }
+
   }
 
-  // MARK: - Tab Selector
+  // MARK: - Custom Tab Selector
 
-  private var tabSelector: some View {
+  private var customTabSelector: some View {
     HStack {
       ForEach(QRCodeTab.allCases, id: \.self) { tab in
-        Button(action: { selectedTab = tab }) {
-          HStack {
-            Image(systemName: tab.icon)
-            Text(tab.title)
+        Button(action: { 
+          withAnimation(.easeInOut(duration: 0.2)) {
+            selectedTab = tab
           }
-          .padding(.horizontal, 16)
-          .padding(.vertical, 8)
+        }) {
+          HStack(spacing: 8) {
+            Image(systemName: tab.icon)
+              .font(.system(size: 14, weight: .medium))
+            Text(tab.title)
+              .font(.system(size: 14, weight: .medium))
+          }
+          .padding(.horizontal, 20)
+          .padding(.vertical, 10)
           .background(
-            selectedTab == tab ? Color.accentColor : Color.clear,
-            in: RoundedRectangle(cornerRadius: 8))
+            Group {
+              if selectedTab == tab {
+                RoundedRectangle(cornerRadius: 8)
+                  .fill(Color.accentColor)
+              } else {
+                RoundedRectangle(cornerRadius: 8)
+                  .fill(Color.clear)
+              }
+            }
+          )
           .foregroundColor(selectedTab == tab ? .white : .primary)
+          .overlay(
+            RoundedRectangle(cornerRadius: 8)
+              .stroke(selectedTab == tab ? Color.clear : Color.secondary.opacity(0.3), lineWidth: 1)
+          )
         }
         .buttonStyle(.plain)
+        .scaleEffect(selectedTab == tab ? 1.02 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: selectedTab)
       }
 
       Spacer()
     }
-    .padding()
+    .padding(.horizontal, 20)
+    .padding(.vertical, 16)
+    .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
   }
 
   // MARK: - Generate View
@@ -95,7 +122,7 @@ struct QRCodeView: View {
 
           TextEditor(text: $inputText)
             .font(.system(.body, design: .monospaced))
-            .frame(minHeight: 120)
+            .frame(height: 120)
             .padding(8)
             .background(Color(NSColor.textBackgroundColor))
             .cornerRadius(8)
@@ -138,7 +165,7 @@ struct QRCodeView: View {
         Spacer()
       }
       .padding()
-      .frame(minWidth: 300)
+      .frame(minWidth: 300, maxHeight: .infinity)
 
       // 右侧：预览和结果
       VStack(spacing: 16) {
@@ -149,7 +176,7 @@ struct QRCodeView: View {
         }
       }
       .padding()
-      .frame(minWidth: 300)
+      .frame(minWidth: 300, maxHeight: .infinity)
     }
   }
 
@@ -192,12 +219,22 @@ struct QRCodeView: View {
         Text("纠错级别")
           .font(.subheadline)
 
-        Picker("纠错级别", selection: $qrCodeOptions.correctionLevel) {
-          ForEach(QRCodeCorrectionLevel.allCases, id: \.self) { level in
-            Text(level.displayName).tag(level)
+        HStack {
+          Picker("纠错级别", selection: $qrCodeOptions.correctionLevel) {
+            ForEach(QRCodeCorrectionLevel.allCases, id: \.self) { level in
+              Text(level.displayName).tag(level)
+            }
           }
+          .pickerStyle(.menu)
+          .frame(maxWidth: 200)
+          
+          Spacer()
+          
+          // 纠错级别说明
+          Text(qrCodeOptions.correctionLevel.description)
+            .font(.caption)
+            .foregroundColor(.secondary)
         }
-        .pickerStyle(.segmented)
       }
 
       // 颜色设置
@@ -266,6 +303,7 @@ struct QRCodeView: View {
       HStack {
         Button("复制图像") {
           copyImageToPasteboard(result.image)
+          operationSuccess("复制成功")
         }
         .buttonStyle(.bordered)
 
@@ -530,6 +568,12 @@ extension QRCodeView {
     recognitionImage = nil
     recognitionResults = []
   }
+  
+  // MARK: - Operation Success
+  private func operationSuccess(_ text: String) {
+    successMessage = text
+    showingSuccess = true
+  }
 
   // MARK: - File Operations
 
@@ -560,6 +604,7 @@ extension QRCodeView {
 
     do {
       try pngData.write(to: url)
+      operationSuccess("保存成功")
     } catch {
       showError("保存图像失败: \(error.localizedDescription)")
     }

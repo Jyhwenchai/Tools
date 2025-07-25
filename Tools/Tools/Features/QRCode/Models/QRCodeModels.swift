@@ -23,6 +23,19 @@ enum QRCodeCorrectionLevel: String, CaseIterable, Codable {
     }
   }
 
+  var description: String {
+    switch self {
+    case .low:
+      "可恢复约7%的错误，适合清晰环境"
+    case .medium:
+      "可恢复约15%的错误，推荐日常使用"
+    case .quartile:
+      "可恢复约25%的错误，适合复杂环境"
+    case .high:
+      "可恢复约30%的错误，适合恶劣环境"
+    }
+  }
+
   var coreImageValue: String {
     rawValue
   }
