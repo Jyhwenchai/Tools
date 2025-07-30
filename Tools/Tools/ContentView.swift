@@ -28,31 +28,32 @@ struct ContentView: View {
     }
     .navigationSplitViewStyle(.balanced)
     .preferredColorScheme(settings.theme.colorScheme)
+    .toast()
     .task {
       await initializeContentView()
     }
     .withStabilityMonitoring()
-//    #if DEBUG
-//      .overlay(alignment: .topTrailing) {
-//        performanceIndicator
-//      }
-//      .alert("性能警告", isPresented: $showPerformanceAlert) {
-//        Button("确定") {
-//          showPerformanceAlert = false
-//        }
-//        Button("优化") {
-//          optimizePerformance()
-//          showPerformanceAlert = false
-//        }
-//      } message: {
-//        Text(performanceWarningMessage)
-//      }
-//      .onChange(of: performanceMonitor?.performanceWarnings ?? []) { _, warnings in
-//        if !warnings.isEmpty, !showPerformanceAlert {
-//          showPerformanceAlert = true
-//        }
-//      }
-//    #endif
+    //    #if DEBUG
+    //      .overlay(alignment: .topTrailing) {
+    //        performanceIndicator
+    //      }
+    //      .alert("性能警告", isPresented: $showPerformanceAlert) {
+    //        Button("确定") {
+    //          showPerformanceAlert = false
+    //        }
+    //        Button("优化") {
+    //          optimizePerformance()
+    //          showPerformanceAlert = false
+    //        }
+    //      } message: {
+    //        Text(performanceWarningMessage)
+    //      }
+    //      .onChange(of: performanceMonitor?.performanceWarnings ?? []) { _, warnings in
+    //        if !warnings.isEmpty, !showPerformanceAlert {
+    //          showPerformanceAlert = true
+    //        }
+    //      }
+    //    #endif
   }
 
   // MARK: - Lazy Initialization
@@ -239,7 +240,7 @@ struct ToolDetailView: View {
       ("加载资源", 0.4),
       ("准备界面", 0.6),
       ("应用设置", 0.8),
-      ("完成加载", 1.0)
+      ("完成加载", 1.0),
     ]
 
     for (_, progress) in loadingSteps {
@@ -265,13 +266,13 @@ struct ToolDetailView: View {
     // Reduced loading delays for better startup performance
     switch tool {
     case .clipboard:
-      0.08 // Reduced from 0.15
+      0.08  // Reduced from 0.15
     case .imageProcessing:
-      0.06 // Reduced from 0.12
+      0.06  // Reduced from 0.12
     case .settings:
-      0.02 // Reduced from 0.05
+      0.02  // Reduced from 0.05
     default:
-      0.04 // Reduced from 0.08
+      0.04  // Reduced from 0.08
     }
   }
 }

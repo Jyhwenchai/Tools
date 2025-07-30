@@ -171,12 +171,13 @@ struct QRCodeView: View {
       VStack(spacing: 16) {
         if let result = generationResult {
           qrCodePreviewView(result: result)
+            .frame(minWidth: 300, maxHeight: .infinity)
         } else {
           qrCodePlaceholderView
+            .frame(minWidth: 300, maxHeight: .infinity)
         }
       }
       .padding()
-      .frame(minWidth: 300, maxHeight: .infinity)
     }
   }
 

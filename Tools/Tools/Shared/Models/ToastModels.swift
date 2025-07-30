@@ -23,17 +23,45 @@ enum ToastType: CaseIterable {
         }
     }
 
-    /// Theme color for each toast type
+    /// Theme color for each toast type - adaptive for dark/light mode
     var color: Color {
         switch self {
         case .success:
-            return .green
+            return Color(NSColor.systemGreen)
         case .error:
-            return .red
+            return Color(NSColor.systemRed)
         case .warning:
-            return .orange
+            return Color(NSColor.systemOrange)
         case .info:
-            return .blue
+            return Color(NSColor.systemBlue)
+        }
+    }
+
+    /// Background tint color for each toast type - subtle adaptive color
+    var backgroundTintColor: Color {
+        switch self {
+        case .success:
+            return Color(NSColor.systemGreen).opacity(0.1)
+        case .error:
+            return Color(NSColor.systemRed).opacity(0.1)
+        case .warning:
+            return Color(NSColor.systemOrange).opacity(0.1)
+        case .info:
+            return Color(NSColor.systemBlue).opacity(0.1)
+        }
+    }
+
+    /// Border color for each toast type - adaptive with proper contrast
+    var borderColor: Color {
+        switch self {
+        case .success:
+            return Color(NSColor.systemGreen).opacity(0.3)
+        case .error:
+            return Color(NSColor.systemRed).opacity(0.3)
+        case .warning:
+            return Color(NSColor.systemOrange).opacity(0.3)
+        case .info:
+            return Color(NSColor.systemBlue).opacity(0.3)
         }
     }
 }

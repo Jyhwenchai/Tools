@@ -5,412 +5,382 @@
 //  Created by Kiro on 2025/7/18.
 //
 
+import AppKit
 import SwiftUI
 
 struct TimeConverterView: View {
-  @State private var inputTime: String = ""
-  @State private var outputTime: String = ""
-  @State private var sourceFormat: TimeFormat = .timestamp
-  @State private var targetFormat: TimeFormat = .iso8601
-  @State private var sourceTimeZone: TimeZone = .current
-  @State private var targetTimeZone: TimeZone = .current
-  @State private var customFormat: String = "yyyy-MM-dd HH:mm:ss"
-  @State private var includeMilliseconds: Bool = false
-  @State private var isProcessing: Bool = false
-  @State private var currentError: ToolError?
-  @State private var validationMessage: String = ""
-  @State private var isValidInput: Bool = true
-  @State private var showCurrentTime: Bool = false
+  // Tab selection state
+  @State private var selectedTab: ConversionTab = .single
 
-  private let timeService = TimeConverterService()
+  // State preservation for tab switching
+  @State private var singleConversionState = SingleConversionState()
+  @State private var batchConversionState = BatchConversionState()
+
+  // Toast manager for notifications
+  @Environment(ToastManager.self) private var toastManager
+
+  // Animation and performance state
+  @State private var isViewAppearing = false
+  @State private var contentOpacity: Double = 0.0
+
+  // Memory management
+  @State private var viewLifecycleManager = ViewLifecycleManager()
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 24) {
-      // 输入区域
-      BrightCardView {
-        VStack(alignment: .leading, spacing: 16) {
-          HStack {
-            Text("时间输入")
-              .font(.headline)
-              .foregroundStyle(.primary)
+    VStack(spacing: 0) {
+      // Real-time timestamp display at the top
+      realTimeTimestampSection
+        .opacity(contentOpacity)
+        .animation(.easeInOut(duration: 0.4).delay(0.1), value: contentOpacity)
 
-            Spacer()
+      // Tab interface
+      tabInterface
+        .opacity(contentOpacity)
+        .animation(.easeInOut(duration: 0.4).delay(0.2), value: contentOpacity)
 
-            Button("当前时间") {
-              loadCurrentTime()
-            }
-            .buttonStyle(.borderless)
-            .font(.caption)
-            .foregroundStyle(.blue)
-          }
-
-          ToolTextField(
-            title: "时间内容",
-            text: $inputTime,
-            placeholder: "输入时间内容，或点击'当前时间'加载当前时间戳...")
-
-          // 源格式选择
-          VStack(alignment: .leading, spacing: 8) {
-            Text("源格式")
-              .font(.callout)
-              .fontWeight(.semibold)
-              .foregroundStyle(.primary)
-
-            Picker("源格式", selection: $sourceFormat) {
-              ForEach(TimeFormat.allCases) { format in
-                VStack(alignment: .leading) {
-                  Text(format.displayName)
-                  Text(format.description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
-                .tag(format)
-              }
-            }
-            .pickerStyle(.menu)
-          }
-
-          // 自定义格式输入（仅在选择自定义格式时显示）
-          if sourceFormat == .custom {
-            ToolTextField(
-              title: "自定义格式",
-              text: $customFormat,
-              placeholder: "例如: yyyy-MM-dd HH:mm:ss")
-          }
-
-          // 源时区选择
-          VStack(alignment: .leading, spacing: 8) {
-            Text("源时区")
-              .font(.callout)
-              .fontWeight(.semibold)
-              .foregroundStyle(.primary)
-
-            TimeZonePicker(selection: $sourceTimeZone)
-          }
-
-          // 输入验证状态
-          if !inputTime.isEmpty {
-            HStack(spacing: 4) {
-              Image(systemName: isValidInput ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundStyle(isValidInput ? .green : .red)
-
-              Text(isValidInput ? "格式正确" : validationMessage)
-                .font(.caption)
-                .foregroundStyle(isValidInput ? .green : .red)
-            }
-            .animation(.easeInOut(duration: 0.2), value: isValidInput)
-          }
-        }
-      }
-
-      // 转换设置区域
-      BrightCardView {
-        VStack(alignment: .leading, spacing: 16) {
-          Text("转换设置")
-            .font(.headline)
-            .foregroundStyle(.primary)
-
-          HStack(spacing: 24) {
-            // 目标格式选择
-            VStack(alignment: .leading, spacing: 8) {
-              Text("目标格式")
-                .font(.callout)
-                .fontWeight(.semibold)
-                .foregroundStyle(.primary)
-
-              Picker("目标格式", selection: $targetFormat) {
-                ForEach(TimeFormat.allCases) { format in
-                  VStack(alignment: .leading) {
-                    Text(format.displayName)
-                    Text(format.description)
-                      .font(.caption)
-                      .foregroundStyle(.secondary)
-                  }
-                  .tag(format)
-                }
-              }
-              .pickerStyle(.menu)
-            }
-
-            // 目标时区选择
-            VStack(alignment: .leading, spacing: 8) {
-              Text("目标时区")
-                .font(.callout)
-                .fontWeight(.semibold)
-                .foregroundStyle(.primary)
-
-              TimeZonePicker(selection: $targetTimeZone)
-            }
-          }
-
-          // 自定义目标格式输入（仅在选择自定义格式时显示）
-          if targetFormat == .custom {
-            ToolTextField(
-              title: "目标自定义格式",
-              text: $customFormat,
-              placeholder: "例如: yyyy-MM-dd HH:mm:ss")
-          }
-
-          // 选项
-          HStack {
-            Toggle("包含毫秒", isOn: $includeMilliseconds)
-              .font(.callout)
-
-            Spacer()
-          }
-
-          // 操作按钮
-          HStack(spacing: 12) {
-            ToolButton(
-              title: "转换",
-              action: convertTime,
-              style: .primary)
-              .disabled(inputTime.isEmpty || !isValidInput || isProcessing)
-
-            ToolButton(
-              title: "交换格式",
-              action: swapFormats,
-              style: .secondary)
-
-            ToolButton(
-              title: "清空",
-              action: clearAll,
-              style: .secondary)
-
-            Spacer()
-
-            ProcessingStateView(
-              isProcessing: isProcessing,
-              message: isProcessing ? "转换中..." : "就绪")
-          }
-        }
-      }
-
-      // 输出区域
-      if !outputTime.isEmpty {
-        BrightCardView {
-          VStack(alignment: .leading, spacing: 16) {
-            Text("转换结果")
-              .font(.headline)
-              .foregroundStyle(.primary)
-
-            ToolResultView(
-              title: "转换后的时间",
-              content: outputTime,
-              canCopy: true)
-          }
-        }
-      }
-
-      // 格式示例区域
-      BrightCardView {
-        VStack(alignment: .leading, spacing: 16) {
-          Text("格式示例")
-            .font(.headline)
-            .foregroundStyle(.primary)
-
-          FormatExamplesView(timeService: timeService)
-        }
-      }
-
-      Spacer()
+      // Tab content
+      tabContent
+        .opacity(contentOpacity)
+        .animation(.easeInOut(duration: 0.4).delay(0.3), value: contentOpacity)
     }
     .padding(24)
     .navigationTitle("时间转换")
-    .errorAlert($currentError)
-    .onChange(of: inputTime) { _, newValue in
-      validateInput(newValue)
-      if isValidInput, !newValue.isEmpty {
-        performRealTimeConversion()
-      } else {
-        outputTime = ""
-      }
+    .environment(\.toastManager, toastManager)
+    .accessibilityElement(children: .contain)
+    .accessibilityLabel("时间转换工具")
+    .accessibilityHint("提供实时时间戳显示、单个转换和批量转换功能")
+    .onAppear {
+      handleViewAppear()
     }
-    .onChange(of: sourceFormat) { _, _ in
-      validateInput(inputTime)
-      if isValidInput, !inputTime.isEmpty {
-        performRealTimeConversion()
-      }
+    .onDisappear {
+      handleViewDisappear()
     }
-    .onChange(of: targetFormat) { _, _ in
-      if isValidInput, !inputTime.isEmpty {
-        performRealTimeConversion()
-      }
+    .onReceive(
+      NotificationCenter.default.publisher(for: NSApplication.willBecomeActiveNotification)
+    ) { _ in
+      handleAppWillEnterForeground()
     }
-    .onChange(of: sourceTimeZone) { _, _ in
-      if isValidInput, !inputTime.isEmpty {
-        performRealTimeConversion()
-      }
+    .onReceive(
+      NotificationCenter.default.publisher(for: NSApplication.willResignActiveNotification)
+    ) { _ in
+      handleAppDidEnterBackground()
     }
-    .onChange(of: targetTimeZone) { _, _ in
-      if isValidInput, !inputTime.isEmpty {
-        performRealTimeConversion()
-      }
+  }
+
+  // MARK: - Real-Time Timestamp Section
+
+  private var realTimeTimestampSection: some View {
+    VStack(spacing: 16) {
+      RealTimeTimestampView()
+        .environment(\.toastManager, toastManager)
     }
-    .onChange(of: customFormat) { _, _ in
-      if sourceFormat == .custom || targetFormat == .custom {
-        validateInput(inputTime)
-        if isValidInput, !inputTime.isEmpty {
-          performRealTimeConversion()
+    .padding(.bottom, 24)
+  }
+
+  // MARK: - Tab Interface
+
+  private var tabInterface: some View {
+    HStack(spacing: 0) {
+      ForEach(ConversionTab.allCases) { tab in
+        Button(action: {
+          withAnimation(.spring(response: 0.4, dampingFraction: 0.8, blendDuration: 0)) {
+            selectedTab = tab
+          }
+
+          // Provide haptic feedback
+          NSHapticFeedbackManager.defaultPerformer.perform(
+            .alignment,
+            performanceTime: .default
+          )
+
+          // Announce tab change for accessibility
+          announceTabChange(to: tab)
+        }) {
+          VStack(spacing: 8) {
+            HStack(spacing: 6) {
+              Image(systemName: tab.iconName)
+                .font(.system(size: 16, weight: .medium))
+                .symbolEffect(.bounce, value: selectedTab == tab)
+
+              Text(tab.displayName)
+                .font(.system(size: 16, weight: .medium))
+            }
+            .foregroundColor(selectedTab == tab ? .primary : .secondary)
+            .scaleEffect(selectedTab == tab ? 1.02 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
+
+            // Enhanced tab indicator with animation
+            RoundedRectangle(cornerRadius: 1)
+              .fill(selectedTab == tab ? Color.accentColor : Color.clear)
+              .frame(height: 2)
+              .scaleEffect(x: selectedTab == tab ? 1.0 : 0.0, anchor: .center)
+              .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedTab)
+          }
         }
+        .buttonStyle(PlainButtonStyle())
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+          RoundedRectangle(cornerRadius: 8)
+            .fill(selectedTab == tab ? Color(.controlBackgroundColor).opacity(0.6) : Color.clear)
+            .animation(.easeInOut(duration: 0.2), value: selectedTab)
+        )
+        .accessibilityLabel("\(tab.displayName)标签")
+        .accessibilityHint("切换到\(tab.displayName)模式")
+        .accessibilityAddTraits(selectedTab == tab ? [.isSelected, .isButton] : [.isButton])
+        .accessibilityValue(selectedTab == tab ? "已选中" : "未选中")
+        .focusable(true)
       }
     }
-    .onChange(of: includeMilliseconds) { _, _ in
-      if isValidInput, !inputTime.isEmpty {
-        performRealTimeConversion()
+    .padding(.horizontal, 4)
+    .padding(.vertical, 8)
+    .background(
+      RoundedRectangle(cornerRadius: 12)
+        .fill(Color(.controlBackgroundColor).opacity(0.3))
+        .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
+    )
+    .padding(.bottom, 24)
+  }
+
+  // MARK: - Tab Content
+
+  private var tabContent: some View {
+    Group {
+      switch selectedTab {
+      case .single:
+        SingleConversionView()
+          .environment(toastManager)
+          .transition(
+            .asymmetric(
+              insertion: .move(edge: .trailing)
+                .combined(with: .opacity)
+                .combined(with: .scale(scale: 0.95)),
+              removal: .move(edge: .leading)
+                .combined(with: .opacity)
+                .combined(with: .scale(scale: 1.05))
+            ))
+
+      case .batch:
+        BatchConversionView()
+          .environment(toastManager)
+          .transition(
+            .asymmetric(
+              insertion: .move(edge: .trailing)
+                .combined(with: .opacity)
+                .combined(with: .scale(scale: 0.95)),
+              removal: .move(edge: .leading)
+                .combined(with: .opacity)
+                .combined(with: .scale(scale: 1.05))
+            ))
+      }
+    }
+    .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedTab)
+    .clipped()  // Prevent content overflow during transitions
+  }
+
+  // MARK: - Lifecycle Management
+
+  private func handleViewAppear() {
+    isViewAppearing = true
+
+    // Animate content appearance
+    withAnimation(.easeInOut(duration: 0.6)) {
+      contentOpacity = 1.0
+    }
+
+    // Initialize view lifecycle manager
+    viewLifecycleManager.viewDidAppear()
+
+    // Show welcome toast for first-time users
+    if !UserDefaults.standard.bool(forKey: "timeConverterWelcomeShown") {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        toastManager.show(
+          "欢迎使用时间转换工具！支持实时时间戳、单个转换和批量转换",
+          type: .info,
+          duration: 4.0
+        )
+        UserDefaults.standard.set(true, forKey: "timeConverterWelcomeShown")
       }
     }
   }
 
-  private func validateInput(_ input: String) {
-    guard !input.isEmpty else {
-      isValidInput = true
-      validationMessage = ""
-      return
-    }
+  private func handleViewDisappear() {
+    isViewAppearing = false
+    contentOpacity = 0.0
+    viewLifecycleManager.viewDidDisappear()
+  }
 
-    let format = sourceFormat == .custom ? customFormat : ""
-
-    // 特殊处理时间戳验证
-    if sourceFormat == .timestamp {
-      isValidInput = timeService.validateTimestamp(input)
-      if !isValidInput {
-        validationMessage = "时间戳格式无效，请输入有效的Unix时间戳"
-      } else {
-        validationMessage = ""
-      }
-    } else {
-      isValidInput = timeService.validateDateString(
-        input,
-        format: sourceFormat,
-        customFormat: format)
-      if !isValidInput {
-        switch sourceFormat {
-        case .iso8601:
-          validationMessage = "ISO 8601格式无效，例如: 2022-01-01T12:00:00Z"
-        case .rfc2822:
-          validationMessage = "RFC 2822格式无效，例如: Mon, 01 Jan 2022 12:00:00 GMT"
-        case .custom:
-          validationMessage = "自定义格式无效，请检查格式字符串和输入内容"
-        default:
-          validationMessage = "输入格式不匹配所选格式"
-        }
-      } else {
-        validationMessage = ""
-      }
+  private func handleAppWillEnterForeground() {
+    if isViewAppearing {
+      viewLifecycleManager.appWillEnterForeground()
     }
   }
 
-  private func performRealTimeConversion() {
-    guard !inputTime.isEmpty, isValidInput else {
-      outputTime = ""
-      return
-    }
-
-    let options = TimeConversionOptions(
-      sourceFormat: sourceFormat,
-      targetFormat: targetFormat,
-      sourceTimeZone: sourceTimeZone,
-      targetTimeZone: targetTimeZone,
-      customFormat: customFormat,
-      includeMilliseconds: includeMilliseconds)
-
-    let result = timeService.convertTime(input: inputTime, options: options)
-
-    if result.success {
-      outputTime = result.result
-      currentError = nil
-    } else {
-      outputTime = ""
-      // 不在实时转换中显示错误，避免过于频繁的错误提示
+  private func handleAppDidEnterBackground() {
+    if isViewAppearing {
+      viewLifecycleManager.appDidEnterBackground()
     }
   }
 
-  private func convertTime() {
-    Task {
-      await performConversion()
+  // MARK: - Accessibility Support
+
+  private func announceTabChange(to tab: ConversionTab) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      NSAccessibility.post(
+        element: NSApp.mainWindow as Any,
+        notification: .announcementRequested,
+        userInfo: [
+          NSAccessibility.NotificationUserInfoKey.announcement: "已切换到\(tab.displayName)模式",
+          NSAccessibility.NotificationUserInfoKey.priority: NSAccessibilityPriorityLevel.medium
+            .rawValue,
+        ]
+      )
     }
   }
 
-  @MainActor
-  private func performConversion() async {
-    isProcessing = true
-    currentError = nil
+  // MARK: - Keyboard Handling
 
-    let options = TimeConversionOptions(
-      sourceFormat: sourceFormat,
-      targetFormat: targetFormat,
-      sourceTimeZone: sourceTimeZone,
-      targetTimeZone: targetTimeZone,
-      customFormat: customFormat,
-      includeMilliseconds: includeMilliseconds)
-
-    let result = timeService.convertTime(input: inputTime, options: options)
-
-    if result.success {
-      outputTime = result.result
-    } else {
-      outputTime = ""
-      currentError = ToolError.processingFailed(result.error ?? "转换失败")
-    }
-
-    isProcessing = false
-  }
-
-  private func swapFormats() {
-    let tempFormat = sourceFormat
-    let tempTimeZone = sourceTimeZone
-
-    sourceFormat = targetFormat
-    sourceTimeZone = targetTimeZone
-    targetFormat = tempFormat
-    targetTimeZone = tempTimeZone
-
-    // 如果有输出结果，将其作为新的输入
-    if !outputTime.isEmpty {
-      inputTime = outputTime
-      outputTime = ""
+  private func handleEnterKeyPress() {
+    // Trigger conversion in the active tab
+    switch selectedTab {
+    case .single:
+      // Post notification for single conversion
+      NotificationCenter.default.post(
+        name: .timeConverterTriggerConversion,
+        object: nil,
+        userInfo: ["tab": "single"]
+      )
+    case .batch:
+      // Post notification for batch conversion
+      NotificationCenter.default.post(
+        name: .timeConverterTriggerConversion,
+        object: nil,
+        userInfo: ["tab": "batch"]
+      )
     }
   }
 
-  private func loadCurrentTime() {
-    let timestamp = timeService.getCurrentTimestamp(includeMilliseconds: includeMilliseconds)
-    inputTime = timestamp
-    sourceFormat = .timestamp
-  }
-
-  private func clearAll() {
-    inputTime = ""
-    outputTime = ""
-    sourceFormat = .timestamp
-    targetFormat = .iso8601
-    sourceTimeZone = .current
-    targetTimeZone = .current
-    customFormat = "yyyy-MM-dd HH:mm:ss"
-    includeMilliseconds = false
-    isValidInput = true
-    validationMessage = ""
+  private func handleCopyKeyPress() {
+    // Trigger copy in the active tab
+    switch selectedTab {
+    case .single:
+      NotificationCenter.default.post(
+        name: .timeConverterTriggerCopy,
+        object: nil,
+        userInfo: ["tab": "single"]
+      )
+    case .batch:
+      NotificationCenter.default.post(
+        name: .timeConverterTriggerCopy,
+        object: nil,
+        userInfo: ["tab": "batch"]
+      )
+    }
   }
 }
 
-// MARK: - Time Zone Picker
+// MARK: - Conversion Tab Enumeration
 
-struct TimeZonePicker: View {
-  @Binding var selection: TimeZone
+enum ConversionTab: String, CaseIterable, Identifiable {
+  case single = "single"
+  case batch = "batch"
 
-  var body: some View {
-    Picker("时区", selection: $selection) {
-      ForEach(TimeZoneInfo.commonTimeZones, id: \.identifier) { timeZoneInfo in
-        VStack(alignment: .leading) {
-          Text(timeZoneInfo.displayName)
-          Text(timeZoneInfo.offsetString)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-        .tag(TimeZone(identifier: timeZoneInfo.identifier) ?? .current)
+  var id: String { rawValue }
+
+  var displayName: String {
+    switch self {
+    case .single:
+      return "单个转换"
+    case .batch:
+      return "批量转换"
+    }
+  }
+
+  var iconName: String {
+    switch self {
+    case .single:
+      return "arrow.left.arrow.right"
+    case .batch:
+      return "list.bullet"
+    }
+  }
+}
+
+// MARK: - Single Conversion View (moved to separate file)
+// SingleConversionView is now implemented in SingleConversionView.swift
+
+// MARK: - State Preservation Models
+
+struct SingleConversionState {
+  // State for preserving single conversion settings between tab switches
+  var lastUsedTimezone: TimeZone = .current
+  var lastUsedFormat: TimeFormat = .iso8601
+  var includeMilliseconds: Bool = false
+}
+
+struct BatchConversionState {
+  // State for preserving batch conversion settings between tab switches
+  var lastSourceFormat: TimeFormat = .timestamp
+  var lastTargetFormat: TimeFormat = .iso8601
+  var lastInputText: String = ""
+}
+
+// MARK: - Time Zone Picker (moved to SingleConversionView.swift)
+// TimeZonePicker is now implemented in SingleConversionView.swift
+
+// MARK: - View Lifecycle Manager
+
+@Observable
+class ViewLifecycleManager {
+  private var isActive = false
+  private var backgroundTime: Date?
+
+  func viewDidAppear() {
+    isActive = true
+    backgroundTime = nil
+  }
+
+  func viewDidDisappear() {
+    isActive = false
+  }
+
+  func appWillEnterForeground() {
+    if let backgroundTime = backgroundTime {
+      let backgroundDuration = Date().timeIntervalSince(backgroundTime)
+
+      // If app was in background for more than 30 seconds, show refresh notification
+      if backgroundDuration > 30 {
+        NotificationCenter.default.post(
+          name: .timeConverterRefreshAfterBackground,
+          object: nil,
+          userInfo: ["backgroundDuration": backgroundDuration]
+        )
       }
     }
-    .pickerStyle(.menu)
+    backgroundTime = nil
+  }
+
+  func appDidEnterBackground() {
+    backgroundTime = Date()
+  }
+}
+
+// MARK: - Performance Monitoring
+
+struct PerformanceMetrics {
+  static func measureRenderTime<T>(operation: () -> T) -> (result: T, duration: TimeInterval) {
+    let startTime = CFAbsoluteTimeGetCurrent()
+    let result = operation()
+    let duration = CFAbsoluteTimeGetCurrent() - startTime
+    return (result, duration)
+  }
+
+  static func logSlowOperation(
+    name: String, duration: TimeInterval, threshold: TimeInterval = 0.016
+  ) {
+    if duration > threshold {
+      print("⚠️ Slow operation detected: \(name) took \(String(format: "%.3f", duration * 1000))ms")
+    }
   }
 }
 
@@ -448,4 +418,5 @@ struct FormatExamplesView: View {
 
 #Preview {
   TimeConverterView()
+    .environment(ToastManager())
 }

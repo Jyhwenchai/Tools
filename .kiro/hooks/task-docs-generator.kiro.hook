@@ -4,7 +4,7 @@
   "description": "Monitors Swift source files for changes and generates or updates implementation documentation in markdown format, storing it in the 'task-docs' directory. Creates new documentation for new features and updates existing documentation when features are modified.",
   "version": "1",
   "when": {
-    "type": "fileEdited",
+    "type": "userTriggered",
     "patterns": [
       "Tools/Tools/Features/**/*.swift",
       "Tools/Tools/Core/**/*.swift",

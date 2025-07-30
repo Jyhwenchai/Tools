@@ -3,7 +3,7 @@
 ## Core Technologies
 - **Language**: Swift 5.9+
 - **Framework**: SwiftUI + SwiftData
-- **Architecture**: MVVM with modular design
+- **Architecture**: MV with modular design
 - **Minimum macOS**: 15.5+
 - **Xcode**: 16.0+ (for development)
 
@@ -47,6 +47,8 @@ xcodebuild test -project Tools/Tools.xcodeproj -scheme Tools -destination 'platf
 ```
 
 ### Code Quality
+- Ensure the code remains concise. Any duplicated code should be encapsulated.
+- Maintain the scalability, robustness, and testability of the written code.
 ```bash
 # Fix code quality issues
 ./Tools/fix_code_quality.sh

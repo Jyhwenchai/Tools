@@ -24,9 +24,12 @@ struct ToolsApp: App {
     }
   }()
 
+  @State private var toastManager = ToastManager()
+  
   var body: some Scene {
     WindowGroup {
       ContentView()
+        .environment(toastManager)
         .modelContainer(sharedModelContainer)
         .preferredColorScheme(AppSettings.shared.theme.colorScheme)
         .task {

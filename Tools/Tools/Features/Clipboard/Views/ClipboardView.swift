@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ClipboardView: View {
   @Environment(\.modelContext) private var modelContext
+  @Environment(ToastManager.self) private var toastManager
   @State private var clipboardService: ClipboardService?
   @State private var searchText = ""
   @State private var selectedType: ClipboardItemType?
@@ -11,7 +12,6 @@ struct ClipboardView: View {
   @State private var manualInputText = ""
   @State private var showingManualInput = false
   @State private var updateTimer: Timer?
-  @State private var showCopySuccess = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -227,7 +227,7 @@ struct ClipboardView: View {
             item: item,
             onCopy: {
               service.copyToClipboard(item.content)
-              showCopySuccess.toggle()
+              toastManager.show("复制成功", type: .success)
             },
             onDelete: {
               service.removeItem(item)
@@ -238,8 +238,6 @@ struct ClipboardView: View {
       .padding()
     }
     .background(Color(NSColor.textBackgroundColor))
-    .alert(Text("复制成功"), isPresented: $showCopySuccess) {
-    }
   }
 
   // MARK: - Helper Methods

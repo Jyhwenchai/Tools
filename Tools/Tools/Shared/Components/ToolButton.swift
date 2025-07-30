@@ -29,6 +29,10 @@ struct ToolButton: View {
           .padding(.vertical, 8)
       }
       .buttonStyle(.borderedProminent)
+      .accessibilityLabel(title)
+      .accessibilityAddTraits(.isButton)
+      .accessibilityHint("主要操作按钮")
+      .focusable(true)
     case .secondary:
       Button(action: action) {
         Text(title)
@@ -38,6 +42,10 @@ struct ToolButton: View {
           .padding(.vertical, 8)
       }
       .buttonStyle(.bordered)
+      .accessibilityLabel(title)
+      .accessibilityAddTraits(.isButton)
+      .accessibilityHint("次要操作按钮")
+      .focusable(true)
     case .destructive:
       Button(action: action) {
         Text(title)
@@ -48,6 +56,10 @@ struct ToolButton: View {
       }
       .buttonStyle(.bordered)
       .foregroundStyle(.red)
+      .accessibilityLabel(title)
+      .accessibilityAddTraits(.isButton)
+      .accessibilityHint("危险操作按钮，请谨慎使用")
+      .focusable(true)
     }
   }
 }

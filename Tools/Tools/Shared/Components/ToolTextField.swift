@@ -15,7 +15,7 @@ struct ToolTextField: View {
   let minHeight: CGFloat
   let maxHeight: CGFloat
   let fixedHeight: CGFloat?
-  
+
   init(
     title: String,
     text: Binding<String>,
@@ -34,15 +34,21 @@ struct ToolTextField: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(title)
-        .font(.callout)
-        .fontWeight(.semibold)
-        .foregroundStyle(.primary)
+      if !title.isEmpty {
+        Text(title)
+          .font(.callout)
+          .fontWeight(.semibold)
+          .foregroundStyle(.primary)
+          .accessibilityLabel("输入框标题: \(title)")
+      }
 
       ScrollView {
         TextField(placeholder, text: $text, axis: .vertical)
           .textFieldStyle(BrightTextFieldStyle())
           .lineLimit(nil)
+          .accessibilityLabel(title.isEmpty ? "文本输入框" : title)
+          .accessibilityHint(placeholder)
+          .focusable(true)
       }
       .frame(
         minHeight: fixedHeight ?? minHeight,
@@ -52,13 +58,15 @@ struct ToolTextField: View {
       .clipShape(RoundedRectangle(cornerRadius: 8))
       .overlay(
         RoundedRectangle(cornerRadius: 8)
-          .stroke(Color(.separatorColor), lineWidth: 1.5))
+          .stroke(Color(.separatorColor), lineWidth: 1.5)
+      )
       .shadow(
         color: Color.black.opacity(0.03),
         radius: 2,
         x: 0,
         y: 1)
     }
+    .accessibilityElement(children: .contain)
   }
 }
 
