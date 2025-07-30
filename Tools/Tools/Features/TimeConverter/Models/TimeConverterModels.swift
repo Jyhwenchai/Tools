@@ -468,6 +468,5 @@ extension TimeZoneInfo {
     TimeZoneInfo(timeZone: TimeZone(identifier: "Asia/Tokyo")!),
     TimeZoneInfo(timeZone: TimeZone(identifier: "Asia/Shanghai")!),
     TimeZoneInfo(timeZone: TimeZone(identifier: "Australia/Sydney")!),
-    TimeZoneInfo(timeZone: TimeZone.current),
   ]
 }

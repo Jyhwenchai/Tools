@@ -118,7 +118,7 @@ struct RealTimeTimestampView: View {
     // MARK: - Control Buttons Section
 
     private var controlButtonsSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             // Unit Toggle Button
             Button(action: {
                 service.toggleUnit()
@@ -126,26 +126,25 @@ struct RealTimeTimestampView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.2.squarepath")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
                     Text("切换单位")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.primary)
                 }
-                .foregroundColor(.primary)
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(Color(NSColor.controlColor))
-                .cornerRadius(6)
-                .overlay(
+                .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color(NSColor.separatorColor), lineWidth: 1)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
                 )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(ModernButtonStyle())
             .accessibilityLabel("切换时间戳单位")
             .accessibilityHint("在秒和毫秒之间切换显示单位")
             .accessibilityAddTraits(.isButton)
             .accessibilityValue("当前单位: \(service.currentUnit.displayName)")
-            .focusable(true)
 
             // Copy Button
             Button(action: {
@@ -153,25 +152,24 @@ struct RealTimeTimestampView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "doc.on.doc")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
                     Text("复制")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.primary)
                 }
-                .foregroundColor(.primary)
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(Color(NSColor.controlColor))
-                .cornerRadius(6)
-                .overlay(
+                .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color(NSColor.separatorColor), lineWidth: 1)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
                 )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(ModernButtonStyle())
             .accessibilityLabel("复制时间戳")
             .accessibilityHint("将当前时间戳复制到剪贴板")
             .accessibilityAddTraits(.isButton)
-            .focusable(true)
             .keyboardShortcut("c", modifiers: .command)
 
             // Timer Toggle Button
@@ -181,26 +179,25 @@ struct RealTimeTimestampView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: service.isRunning ? "pause.fill" : "play.fill")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(service.isRunning ? .orange : .green)
                     Text(service.isRunning ? "停止" : "开始")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.primary)
                 }
-                .foregroundColor(.primary)
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(Color(NSColor.controlColor))
-                .cornerRadius(6)
-                .overlay(
+                .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color(NSColor.separatorColor), lineWidth: 1)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
                 )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(ModernButtonStyle())
             .accessibilityLabel(service.isRunning ? "停止时间戳更新" : "开始时间戳更新")
             .accessibilityHint(service.isRunning ? "暂停实时时间戳更新" : "开始实时时间戳更新")
             .accessibilityAddTraits(.isButton)
             .accessibilityValue(service.isRunning ? "运行中" : "已停止")
-            .focusable(true)
         }
     }
 
@@ -296,6 +293,18 @@ struct RealTimeTimestampView: View {
             type: .info,
             duration: 1.5
         )
+    }
+}
+
+// MARK: - Modern Button Style
+
+struct ModernButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .focusable(false)  // Remove focus ring
     }
 }
 

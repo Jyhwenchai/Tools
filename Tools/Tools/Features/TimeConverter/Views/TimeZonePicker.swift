@@ -130,6 +130,9 @@ struct TimeZonePicker: View {
             TimeZoneInfo.commonTimeZones
             + timeService.searchTimezones(query: searchText.isEmpty ? "" : searchText)
 
+      allTimeZones.forEach { info in
+        print(info.displayName)
+      }
         if searchText.isEmpty {
             return Array(Set(allTimeZones)).sorted { $0.displayName < $1.displayName }
         } else {

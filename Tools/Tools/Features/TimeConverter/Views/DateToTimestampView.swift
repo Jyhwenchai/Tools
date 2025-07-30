@@ -221,15 +221,15 @@ struct DateToTimestampView: View {
 
                 // Convert Button
                 HStack {
-                    ToolButton(
-                        title: "转换",
-                        action: performConversion,
-                        style: .primary
-                    )
-                    .disabled(dateInput.isEmpty || !validationState.isValid || isProcessing)
-                    .accessibilityLabel("转换按钮")
-                    .accessibilityHint("将输入的日期转换为时间戳")
-                    .keyboardShortcut(.return, modifiers: [])
+//                    ToolButton(
+//                        title: "转换",
+//                        action: performConversion,
+//                        style: .primary
+//                    )
+//                    .disabled(dateInput.isEmpty || !validationState.isValid || isProcessing)
+//                    .accessibilityLabel("转换按钮")
+//                    .accessibilityHint("将输入的日期转换为时间戳")
+//                    .keyboardShortcut(.return, modifiers: [])
 
                     ToolButton(
                         title: "清空",
