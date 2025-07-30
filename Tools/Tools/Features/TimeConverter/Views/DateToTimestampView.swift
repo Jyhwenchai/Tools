@@ -53,14 +53,57 @@ struct DateToTimestampView: View {
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
 
-                    Picker("日期格式", selection: $selectedDateFormat) {
-                        ForEach(TimeFormat.allCases.filter { $0 != .timestamp }) { format in
-                            Text(format.displayName).tag(format)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 4) {
+                            ForEach(TimeFormat.allCases.filter { $0 != .timestamp }) { format in
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        selectedDateFormat = format
+                                    }
+                                }) {
+                                    Text(format.displayName)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(
+                                            selectedDateFormat == format ? .white : .primary
+                                        )
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(
+                                                    selectedDateFormat == format
+                                                        ? Color.accentColor
+                                                        : Color(.controlBackgroundColor)
+                                                )
+                                                .animation(
+                                                    .easeInOut(duration: 0.2),
+                                                    value: selectedDateFormat)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(
+                                                    selectedDateFormat == format
+                                                        ? Color.clear
+                                                        : Color(.separatorColor).opacity(0.3),
+                                                    lineWidth: 1
+                                                )
+                                                .animation(
+                                                    .easeInOut(duration: 0.2),
+                                                    value: selectedDateFormat)
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .accessibilityLabel(format.displayName)
+                                .accessibilityHint("选择\(format.displayName)格式")
+                                .accessibilityAddTraits(
+                                    selectedDateFormat == format
+                                        ? [.isSelected, .isButton] : [.isButton])
+                            }
                         }
+                        .padding(.horizontal, 1)
                     }
-                    .pickerStyle(.segmented)
+                    .accessibilityElement(children: .contain)
                     .accessibilityLabel("日期格式选择器")
-                    .accessibilityHint("选择输入日期的格式")
                     .accessibilityValue(selectedDateFormat.displayName)
                 }
 
@@ -129,14 +172,50 @@ struct DateToTimestampView: View {
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
 
-                    Picker("时间戳单位", selection: $timestampUnit) {
+                    HStack(spacing: 4) {
                         ForEach(TimestampUnit.allCases) { unit in
-                            Text(unit.displayName).tag(unit)
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    timestampUnit = unit
+                                }
+                            }) {
+                                Text(unit.displayName)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(timestampUnit == unit ? .white : .primary)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(
+                                                timestampUnit == unit
+                                                    ? Color.accentColor
+                                                    : Color(.controlBackgroundColor)
+                                            )
+                                            .animation(
+                                                .easeInOut(duration: 0.2), value: timestampUnit)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(
+                                                timestampUnit == unit
+                                                    ? Color.clear
+                                                    : Color(.separatorColor).opacity(0.3),
+                                                lineWidth: 1
+                                            )
+                                            .animation(
+                                                .easeInOut(duration: 0.2), value: timestampUnit)
+                                    )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .accessibilityLabel(unit.displayName)
+                            .accessibilityHint("选择\(unit.displayName)单位")
+                            .accessibilityAddTraits(
+                                timestampUnit == unit ? [.isSelected, .isButton] : [.isButton])
                         }
                     }
-                    .pickerStyle(.segmented)
+                    .accessibilityElement(children: .contain)
                     .accessibilityLabel("时间戳单位选择器")
-                    .accessibilityHint("选择输出时间戳的单位")
                     .accessibilityValue(timestampUnit.displayName)
                 }
 

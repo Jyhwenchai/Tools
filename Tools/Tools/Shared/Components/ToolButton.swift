@@ -19,47 +19,78 @@ struct ToolButton: View {
   }
 
   var body: some View {
+    Button(action: action) {
+      Text(title)
+        .font(.callout)
+        .fontWeight(.medium)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+          RoundedRectangle(cornerRadius: 8)
+            .fill(backgroundColorForStyle)
+        )
+        .foregroundStyle(foregroundColorForStyle)
+        .overlay(
+          RoundedRectangle(cornerRadius: 8)
+            .stroke(borderColorForStyle, lineWidth: borderWidthForStyle)
+        )
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(title)
+    .accessibilityAddTraits(.isButton)
+    .accessibilityHint(accessibilityHintForStyle)
+  }
+
+  private var backgroundColorForStyle: Color {
     switch style {
     case .primary:
-      Button(action: action) {
-        Text(title)
-          .font(.callout)
-          .fontWeight(.medium)
-          .padding(.horizontal, 16)
-          .padding(.vertical, 8)
-      }
-      .buttonStyle(.borderedProminent)
-      .accessibilityLabel(title)
-      .accessibilityAddTraits(.isButton)
-      .accessibilityHint("主要操作按钮")
-      .focusable(true)
+      return .accentColor
     case .secondary:
-      Button(action: action) {
-        Text(title)
-          .font(.callout)
-          .fontWeight(.medium)
-          .padding(.horizontal, 16)
-          .padding(.vertical, 8)
-      }
-      .buttonStyle(.bordered)
-      .accessibilityLabel(title)
-      .accessibilityAddTraits(.isButton)
-      .accessibilityHint("次要操作按钮")
-      .focusable(true)
+      return Color(.controlBackgroundColor)
     case .destructive:
-      Button(action: action) {
-        Text(title)
-          .font(.callout)
-          .fontWeight(.medium)
-          .padding(.horizontal, 16)
-          .padding(.vertical, 8)
-      }
-      .buttonStyle(.bordered)
-      .foregroundStyle(.red)
-      .accessibilityLabel(title)
-      .accessibilityAddTraits(.isButton)
-      .accessibilityHint("危险操作按钮，请谨慎使用")
-      .focusable(true)
+      return Color(.controlBackgroundColor)
+    }
+  }
+
+  private var foregroundColorForStyle: Color {
+    switch style {
+    case .primary:
+      return .white
+    case .secondary:
+      return .primary
+    case .destructive:
+      return .red
+    }
+  }
+
+  private var borderColorForStyle: Color {
+    switch style {
+    case .primary:
+      return .clear
+    case .secondary:
+      return Color(.separatorColor).opacity(0.6)
+    case .destructive:
+      return Color.red.opacity(0.3)
+    }
+  }
+
+  private var borderWidthForStyle: CGFloat {
+    switch style {
+    case .primary:
+      return 0
+    case .secondary, .destructive:
+      return 1
+    }
+  }
+
+  private var accessibilityHintForStyle: String {
+    switch style {
+    case .primary:
+      return "主要操作按钮"
+    case .secondary:
+      return "次要操作按钮"
+    case .destructive:
+      return "危险操作按钮，请谨慎使用"
     }
   }
 }

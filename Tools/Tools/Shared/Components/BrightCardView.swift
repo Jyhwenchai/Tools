@@ -16,16 +16,20 @@ struct BrightCardView<Content: View>: View {
 
   var body: some View {
     content
-      .padding(16)
-      .background(Color(.controlBackgroundColor))
-      .clipShape(RoundedRectangle(cornerRadius: 12))
-      .shadow(
-        color: Color.black.opacity(0.05),
-        radius: 8,
-        x: 0,
-        y: 2)
+      .padding(20)
+      .background(
+        RoundedRectangle(cornerRadius: 12)
+          .fill(Color(.controlBackgroundColor))
+          .shadow(
+            color: Color.black.opacity(0.04),
+            radius: 6,
+            x: 0,
+            y: 2
+          )
+      )
       .overlay(
         RoundedRectangle(cornerRadius: 12)
-          .stroke(Color(.separatorColor).opacity(0.3), lineWidth: 1))
+          .stroke(Color(.separatorColor).opacity(0.2), lineWidth: 0.5)
+      )
   }
 }

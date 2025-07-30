@@ -27,23 +27,25 @@ struct TimeConverterView: View {
   @State private var viewLifecycleManager = ViewLifecycleManager()
 
   var body: some View {
-    VStack(spacing: 0) {
-      // Real-time timestamp display at the top
-      realTimeTimestampSection
-        .opacity(contentOpacity)
-        .animation(.easeInOut(duration: 0.4).delay(0.1), value: contentOpacity)
+    ScrollView {
+      VStack(spacing: 0) {
+        // Real-time timestamp display at the top
+        realTimeTimestampSection
+          .opacity(contentOpacity)
+          .animation(.easeInOut(duration: 0.4).delay(0.1), value: contentOpacity)
 
-      // Tab interface
-      tabInterface
-        .opacity(contentOpacity)
-        .animation(.easeInOut(duration: 0.4).delay(0.2), value: contentOpacity)
+        // Tab interface
+        tabInterface
+          .opacity(contentOpacity)
+          .animation(.easeInOut(duration: 0.4).delay(0.2), value: contentOpacity)
 
-      // Tab content
-      tabContent
-        .opacity(contentOpacity)
-        .animation(.easeInOut(duration: 0.4).delay(0.3), value: contentOpacity)
+        // Tab content
+        tabContent
+          .opacity(contentOpacity)
+          .animation(.easeInOut(duration: 0.4).delay(0.3), value: contentOpacity)
+      }
+      .padding(24)
     }
-    .padding(24)
     .navigationTitle("时间转换")
     .environment(\.toastManager, toastManager)
     .accessibilityElement(children: .contain)
@@ -80,7 +82,7 @@ struct TimeConverterView: View {
   // MARK: - Tab Interface
 
   private var tabInterface: some View {
-    HStack(spacing: 0) {
+    HStack(spacing: 4) {
       ForEach(ConversionTab.allCases) { tab in
         Button(action: {
           withAnimation(.spring(response: 0.4, dampingFraction: 0.8, blendDuration: 0)) {
@@ -96,49 +98,40 @@ struct TimeConverterView: View {
           // Announce tab change for accessibility
           announceTabChange(to: tab)
         }) {
-          VStack(spacing: 8) {
-            HStack(spacing: 6) {
-              Image(systemName: tab.iconName)
-                .font(.system(size: 16, weight: .medium))
-                .symbolEffect(.bounce, value: selectedTab == tab)
+          HStack(spacing: 6) {
+            Image(systemName: tab.iconName)
+              .font(.system(size: 14, weight: .medium))
+              .symbolEffect(.bounce, value: selectedTab == tab)
 
-              Text(tab.displayName)
-                .font(.system(size: 16, weight: .medium))
-            }
-            .foregroundColor(selectedTab == tab ? .primary : .secondary)
-            .scaleEffect(selectedTab == tab ? 1.02 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
-
-            // Enhanced tab indicator with animation
-            RoundedRectangle(cornerRadius: 1)
-              .fill(selectedTab == tab ? Color.accentColor : Color.clear)
-              .frame(height: 2)
-              .scaleEffect(x: selectedTab == tab ? 1.0 : 0.0, anchor: .center)
-              .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedTab)
+            Text(tab.displayName)
+              .font(.system(size: 14, weight: .medium))
           }
+          .foregroundColor(selectedTab == tab ? .white : .primary)
+          .padding(.horizontal, 16)
+          .padding(.vertical, 10)
+          .background(
+            RoundedRectangle(cornerRadius: 8)
+              .fill(selectedTab == tab ? Color.accentColor : Color(.controlBackgroundColor))
+              .animation(.easeInOut(duration: 0.2), value: selectedTab)
+          )
+          .overlay(
+            RoundedRectangle(cornerRadius: 8)
+              .stroke(
+                selectedTab == tab ? Color.clear : Color(.separatorColor).opacity(0.3),
+                lineWidth: 1
+              )
+              .animation(.easeInOut(duration: 0.2), value: selectedTab)
+          )
+          .scaleEffect(selectedTab == tab ? 1.02 : 1.0)
+          .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
         }
         .buttonStyle(PlainButtonStyle())
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(
-          RoundedRectangle(cornerRadius: 8)
-            .fill(selectedTab == tab ? Color(.controlBackgroundColor).opacity(0.6) : Color.clear)
-            .animation(.easeInOut(duration: 0.2), value: selectedTab)
-        )
         .accessibilityLabel("\(tab.displayName)标签")
         .accessibilityHint("切换到\(tab.displayName)模式")
         .accessibilityAddTraits(selectedTab == tab ? [.isSelected, .isButton] : [.isButton])
         .accessibilityValue(selectedTab == tab ? "已选中" : "未选中")
-        .focusable(true)
       }
     }
-    .padding(.horizontal, 4)
-    .padding(.vertical, 8)
-    .background(
-      RoundedRectangle(cornerRadius: 12)
-        .fill(Color(.controlBackgroundColor).opacity(0.3))
-        .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
-    )
     .padding(.bottom, 24)
   }
 

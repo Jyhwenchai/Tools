@@ -86,9 +86,9 @@ struct TimestampToDateView: View {
                 HStack {
                     Toggle("包含毫秒", isOn: $includeMilliseconds)
                         .font(.callout)
+                        .toggleStyle(.switch)
                         .accessibilityLabel("包含毫秒选项")
                         .accessibilityHint("是否在转换结果中包含毫秒精度")
-                        .focusable(true)
 
                     Spacer()
                 }

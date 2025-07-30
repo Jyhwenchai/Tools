@@ -116,12 +116,38 @@ struct BatchConversionView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Picker("源格式", selection: $sourceFormat) {
+                    Menu {
                         ForEach(TimeFormat.allCases) { format in
-                            Text(format.displayName).tag(format)
+                            Button(action: {
+                                sourceFormat = format
+                            }) {
+                                HStack {
+                                    Text(format.displayName)
+                                    if sourceFormat == format {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
                         }
+                    } label: {
+                        HStack {
+                            Text(sourceFormat.displayName)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
+                        )
                     }
-                    .pickerStyle(.menu)
                     .frame(maxWidth: .infinity)
                     .accessibilityLabel("源格式选择器")
                     .accessibilityHint("选择输入数据的格式")
@@ -137,12 +163,38 @@ struct BatchConversionView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Picker("目标格式", selection: $targetFormat) {
+                    Menu {
                         ForEach(TimeFormat.allCases) { format in
-                            Text(format.displayName).tag(format)
+                            Button(action: {
+                                targetFormat = format
+                            }) {
+                                HStack {
+                                    Text(format.displayName)
+                                    if targetFormat == format {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
                         }
+                    } label: {
+                        HStack {
+                            Text(targetFormat.displayName)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
+                        )
                     }
-                    .pickerStyle(.menu)
                     .frame(maxWidth: .infinity)
                     .accessibilityLabel("目标格式选择器")
                     .accessibilityHint("选择输出数据的格式")
@@ -176,13 +228,43 @@ struct BatchConversionView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Picker("源时区", selection: $sourceTimeZone) {
+                    Menu {
                         ForEach(TimeZoneInfo.commonTimeZones, id: \.identifier) { tzInfo in
-                            Text("\(tzInfo.displayName) (\(tzInfo.offsetString))")
-                                .tag(TimeZone(identifier: tzInfo.identifier) ?? .current)
+                            Button(action: {
+                                if let timeZone = TimeZone(identifier: tzInfo.identifier) {
+                                    sourceTimeZone = timeZone
+                                }
+                            }) {
+                                HStack {
+                                    Text("\(tzInfo.displayName) (\(tzInfo.offsetString))")
+                                    if sourceTimeZone.identifier == tzInfo.identifier {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
                         }
+                    } label: {
+                        HStack {
+                            Text(
+                                "\(TimeZoneInfo(timeZone: sourceTimeZone).displayName) (\(TimeZoneInfo(timeZone: sourceTimeZone).offsetString))"
+                            )
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
+                        )
                     }
-                    .pickerStyle(.menu)
                     .frame(maxWidth: .infinity)
                 }
             }
@@ -193,13 +275,43 @@ struct BatchConversionView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Picker("目标时区", selection: $targetTimeZone) {
+                    Menu {
                         ForEach(TimeZoneInfo.commonTimeZones, id: \.identifier) { tzInfo in
-                            Text("\(tzInfo.displayName) (\(tzInfo.offsetString))")
-                                .tag(TimeZone(identifier: tzInfo.identifier) ?? .current)
+                            Button(action: {
+                                if let timeZone = TimeZone(identifier: tzInfo.identifier) {
+                                    targetTimeZone = timeZone
+                                }
+                            }) {
+                                HStack {
+                                    Text("\(tzInfo.displayName) (\(tzInfo.offsetString))")
+                                    if targetTimeZone.identifier == tzInfo.identifier {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
                         }
+                    } label: {
+                        HStack {
+                            Text(
+                                "\(TimeZoneInfo(timeZone: targetTimeZone).displayName) (\(TimeZoneInfo(timeZone: targetTimeZone).offsetString))"
+                            )
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
+                        )
                     }
-                    .pickerStyle(.menu)
                     .frame(maxWidth: .infinity)
                 }
             }
@@ -213,7 +325,14 @@ struct BatchConversionView: View {
                 .foregroundStyle(.secondary)
 
             TextField("例如: yyyy-MM-dd HH:mm:ss", text: $customFormat)
-                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
+                )
 
             Text("常用格式: yyyy-MM-dd, MM/dd/yyyy, dd.MM.yyyy HH:mm")
                 .font(.caption2)
@@ -224,7 +343,8 @@ struct BatchConversionView: View {
     private var additionalOptionsView: some View {
         HStack {
             Toggle("包含毫秒", isOn: $includeMilliseconds)
-                .font(.caption)
+                .font(.callout)
+                .toggleStyle(.switch)
 
             Spacer()
         }
@@ -245,8 +365,17 @@ struct BatchConversionView: View {
                         }
                         Text(isProcessing ? "处理中..." : "开始批量转换")
                     }
+                    .font(.callout)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.accentColor)
+                    )
+                    .foregroundStyle(.white)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
                 .disabled(
                     inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                         || isProcessing
@@ -256,10 +385,13 @@ struct BatchConversionView: View {
                 .keyboardShortcut(.return, modifiers: [])
 
                 if isProcessing {
-                    Button("取消", action: cancelProcessing)
-                        .buttonStyle(.bordered)
-                        .accessibilityLabel("取消批量处理")
-                        .accessibilityHint("停止当前的批量转换处理")
+                    ToolButton(
+                        title: "取消",
+                        action: cancelProcessing,
+                        style: .secondary
+                    )
+                    .accessibilityLabel("取消批量处理")
+                    .accessibilityHint("停止当前的批量转换处理")
                 }
 
                 Spacer()
@@ -329,12 +461,38 @@ struct BatchConversionView: View {
 
     private var exportControlsView: some View {
         HStack(spacing: 8) {
-            Picker("导出格式", selection: $exportFormat) {
+            Menu {
                 ForEach(BatchExportFormat.allCases) { format in
-                    Text(format.displayName).tag(format)
+                    Button(action: {
+                        exportFormat = format
+                    }) {
+                        HStack {
+                            Text(format.displayName)
+                            if exportFormat == format {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
                 }
+            } label: {
+                HStack {
+                    Text(exportFormat.displayName)
+                        .foregroundStyle(.primary)
+                        .font(.caption)
+                    Image(systemName: "chevron.down")
+                        .foregroundStyle(.secondary)
+                        .font(.caption2)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
+                )
             }
-            .pickerStyle(.menu)
             .frame(width: 80)
 
             Button(action: exportResults) {
@@ -347,8 +505,21 @@ struct BatchConversionView: View {
                     }
                     Text("导出")
                 }
+                .font(.callout)
+                .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(.controlBackgroundColor))
+                )
+                .foregroundStyle(.primary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
+                )
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
             .disabled(results.isEmpty || isExporting)
         }
     }

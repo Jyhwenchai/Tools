@@ -17,25 +17,30 @@ struct TimeZonePicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Button(action: {
-                isExpanded.toggle()
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
             }) {
                 HStack {
                     Text(displayName(for: selection))
                         .foregroundStyle(.primary)
+                        .font(.callout)
 
                     Spacer()
 
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .foregroundStyle(.secondary)
                         .font(.caption)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        .animation(.easeInOut(duration: 0.2), value: isExpanded)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
                 .background(Color(.controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color(.separatorColor), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(.separatorColor).opacity(0.6), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)

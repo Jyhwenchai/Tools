@@ -36,14 +36,50 @@ struct SingleConversionView: View {
                     .foregroundStyle(.primary)
                     .accessibilityLabel("转换模式选择")
 
-                Picker("转换模式", selection: $selectedConversionMode) {
+                HStack(spacing: 4) {
                     ForEach(ConversionMode.allCases) { mode in
-                        Text(mode.displayName).tag(mode)
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedConversionMode = mode
+                            }
+                        }) {
+                            Text(mode.displayName)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(selectedConversionMode == mode ? .white : .primary)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            selectedConversionMode == mode
+                                                ? Color.accentColor : Color(.controlBackgroundColor)
+                                        )
+                                        .animation(
+                                            .easeInOut(duration: 0.2), value: selectedConversionMode
+                                        )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(
+                                            selectedConversionMode == mode
+                                                ? Color.clear : Color(.separatorColor).opacity(0.3),
+                                            lineWidth: 1
+                                        )
+                                        .animation(
+                                            .easeInOut(duration: 0.2), value: selectedConversionMode
+                                        )
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel(mode.displayName)
+                        .accessibilityHint("选择\(mode.displayName)模式")
+                        .accessibilityAddTraits(
+                            selectedConversionMode == mode ? [.isSelected, .isButton] : [.isButton])
                     }
                 }
-                .pickerStyle(.segmented)
+                .accessibilityElement(children: .contain)
                 .accessibilityLabel("转换模式选择器")
-                .accessibilityHint("选择时间戳转日期或日期转时间戳模式")
                 .accessibilityValue(selectedConversionMode.displayName)
             }
 

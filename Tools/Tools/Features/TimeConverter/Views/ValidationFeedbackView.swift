@@ -203,20 +203,22 @@ struct ValidatedTextFieldStyle: TextFieldStyle {
     }
 
     private var borderColor: Color {
-        if isFocused {
-            return .blue
-        } else if !validationState.isValid {
-            return .red
+        if !validationState.isValid {
+            return .red.opacity(0.6)
         } else if validationState.warningMessage != nil {
-            return .orange
+            return .orange.opacity(0.6)
+        } else if isFocused {
+            return .blue.opacity(0.4)
         } else {
-            return Color(.separatorColor)
+            return Color(.separatorColor).opacity(0.6)
         }
     }
 
     private var borderWidth: CGFloat {
-        if isFocused || !validationState.isValid {
-            return 2
+        if !validationState.isValid {
+            return 1.5
+        } else if isFocused {
+            return 1.5
         } else {
             return 1
         }
@@ -224,13 +226,13 @@ struct ValidatedTextFieldStyle: TextFieldStyle {
 
     private var shadowColor: Color {
         if !validationState.isValid {
-            return .red.opacity(0.2)
+            return .red.opacity(0.1)
         } else if validationState.warningMessage != nil {
-            return .orange.opacity(0.2)
+            return .orange.opacity(0.1)
         } else if isFocused {
-            return .blue.opacity(0.2)
+            return .blue.opacity(0.1)
         } else {
-            return .black.opacity(0.03)
+            return .black.opacity(0.02)
         }
     }
 }
