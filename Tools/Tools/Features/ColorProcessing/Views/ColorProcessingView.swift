@@ -28,13 +28,13 @@ struct ColorProcessingView: View {
                 colorPickerSection
 
                 // Color format display section
-//                colorFormatSection
-//
-//                // Screen sampling section
-//                screenSamplingSection
-//
-//                // Color palette section
-//                colorPaletteSection
+                colorFormatSection
+
+                // Screen sampling section
+                screenSamplingSection
+
+                // Color palette section
+                colorPaletteSection
             }
             .padding()
         }
@@ -106,14 +106,15 @@ struct ColorProcessingView: View {
         .accessibilityHint("Interactive color picker for selecting colors visually")
         .onChange(of: selectedColor) { _, newColor in
             // Convert SwiftUI Color to ColorRepresentation
-            updateColorRepresentation(from: newColor)
+          updateColorRepresentation(from: newColor)
+//          selectedColor = swiftUIColor(from: colorRep.rgb)
         }
-        .onChange(of: conversionService.currentColor) { _, newColorRep in
-            // Convert ColorRepresentation to SwiftUI Color
-            if let colorRep = newColorRep {
-                selectedColor = swiftUIColor(from: colorRep.rgb)
-            }
-        }
+//        .onChange(of: conversionService.currentColor) { _, newColorRep in
+//            // Convert ColorRepresentation to SwiftUI Color
+//            if let colorRep = newColorRep {
+//                selectedColor = swiftUIColor(from: colorRep.rgb)
+//            }
+//        }
     }
 
     private var colorFormatSection: some View {
