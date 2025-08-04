@@ -17,6 +17,7 @@ class NavigationManager {
     case imageProcessing = "图片处理"
     case qrCode = "二维码"
     case timeConverter = "时间转换"
+    case colorProcessing = "颜色处理"
     case clipboard = "粘贴板"
     case settings = "设置"
 
@@ -29,6 +30,7 @@ class NavigationManager {
       case .imageProcessing: "photo"
       case .qrCode: "qrcode"
       case .timeConverter: "clock"
+      case .colorProcessing: "paintpalette"
       case .clipboard: "doc.on.clipboard"
       case .settings: "gearshape"
       }
@@ -43,6 +45,7 @@ class NavigationManager {
       case .imageProcessing: "图片压缩和处理"
       case .qrCode: "二维码生成和识别"
       case .timeConverter: "时间格式转换"
+      case .colorProcessing: "颜色格式转换和处理"
       case .clipboard: "粘贴板历史管理"
       case .settings: "应用设置和偏好"
       }

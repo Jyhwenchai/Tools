@@ -7,6 +7,7 @@
 
 import Foundation
 import Testing
+
 @testable import Tools
 
 struct AsyncOperationManagerTests {
@@ -104,11 +105,11 @@ struct AsyncOperationManagerTests {
           throw CancellationError()
         }
 
-        let progress = Double(i) / 10.0
+        let progress = Double(index) / 10.0
         progressCallback(progress)
 
         // 模拟工作
-        try await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
+        try await Task.sleep(nanoseconds: 10_000_000)  // 0.01 seconds
       }
       return "完成"
     } onProgress: { progress in
@@ -152,7 +153,7 @@ struct AsyncOperationManagerTests {
     }
 
     // 短暂延迟后取消操作
-    try await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+    try await Task.sleep(nanoseconds: 50_000_000)  // 0.05 seconds
     manager.cancelOperation(id: "cancel-operation-test")
 
     await expectation.wait()
@@ -167,7 +168,8 @@ struct AsyncOperationManagerTests {
     manager.executeWithRetry(
       id: "retry-test",
       maxRetries: 3,
-      retryDelay: 0.1) { _, _ in
+      retryDelay: 0.1
+    ) { _, _ in
       attemptCount += 1
       if attemptCount < 3 {
         throw ToolError.processingFailed("尝试 \(attemptCount)")
@@ -195,7 +197,7 @@ struct AsyncOperationManagerTests {
     let operations = [
       ("op1", { "结果1" }),
       ("op2", { "结果2" }),
-      ("op3", { "结果3" })
+      ("op3", { "结果3" }),
     ]
 
     manager.executeBatch(operations: operations) { result in
@@ -225,7 +227,7 @@ struct AsyncOperationManagerTests {
 
     // 添加操作
     let operation = manager.executeSimple(id: "management-test") {
-      try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+      try await Task.sleep(nanoseconds: 100_000_000)  // 0.1 seconds
       return "完成"
     }
 
@@ -239,7 +241,7 @@ struct AsyncOperationManagerTests {
     #expect(allOperations.count == 1)
 
     // 等待操作完成
-    try await Task.sleep(nanoseconds: 150_000_000) // 0.15 seconds
+    try await Task.sleep(nanoseconds: 150_000_000)  // 0.15 seconds
 
     #expect(manager.activeOperationCount == 0)
     #expect(manager.isAnyOperationRunning == false)

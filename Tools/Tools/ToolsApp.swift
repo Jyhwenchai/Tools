@@ -13,7 +13,8 @@ struct ToolsApp: App {
   // SwiftData model container - optimized for faster startup
   var sharedModelContainer: ModelContainer = {
     let schema = Schema([
-      ClipboardItem.self
+      ClipboardItem.self,
+      SavedColorModel.self,
     ])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,13 +26,12 @@ struct ToolsApp: App {
   }()
 
   @State private var toastManager = ToastManager()
-  
+
   var body: some Scene {
     WindowGroup {
       ContentView()
         .environment(toastManager)
         .modelContainer(sharedModelContainer)
-        .preferredColorScheme(AppSettings.shared.theme.colorScheme)
         .task {
           await initializeAppLazily()
         }

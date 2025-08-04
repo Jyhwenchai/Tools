@@ -7,6 +7,7 @@
 
 import Foundation
 import Testing
+
 @testable import Tools
 
 struct ApplicationStabilityTests {
@@ -33,7 +34,7 @@ struct ApplicationStabilityTests {
     // 分配一些内存
     var data: [Data] = []
     for _ in 1...10 {
-      data.append(Data(count: 1024 * 1024)) // 1MB each
+      data.append(Data(count: 1024 * 1024))  // 1MB each
     }
 
     // 获取更新后的内存使用
@@ -50,7 +51,7 @@ struct ApplicationStabilityTests {
   @Test("稳定性报告格式化")
   func stabilityReportFormatting() {
     let report = StabilityReport(
-      uptime: 3665, // 1h 1m 5s
+      uptime: 3665,  // 1h 1m 5s
       memoryUsage: 256.5,
       thermalState: "正常",
       lastCrashDate: nil,
@@ -75,11 +76,11 @@ struct ApplicationStabilityTests {
     UserDefaults.standard.set(false, forKey: "clean_exit")
 
     // 设置最近的心跳时间
-    let recentHeartbeat = Date().timeIntervalSince1970 - 60 // 1 minute ago
+    let recentHeartbeat = Date().timeIntervalSince1970 - 60  // 1 minute ago
     UserDefaults.standard.set(recentHeartbeat, forKey: "last_heartbeat")
 
-    // 重新初始化监控器应检测到可能的崩溃
-    let monitor = ApplicationStabilityMonitor()
+    // 使用共享实例检测崩溃
+    let monitor = ApplicationStabilityMonitor.shared
 
     // 验证崩溃日期已设置
     #expect(monitor.lastCrashDate != nil)

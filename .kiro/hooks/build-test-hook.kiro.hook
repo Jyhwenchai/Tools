@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "build_test",
+  "description": "Automatically builds and tests the Swift project when source files are modified to ensure no compilation errors",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "Tools/Tools/**/*.swift",
+      "Tools/ToolsTests/**/*.swift",
+      "Tools/ToolsUITests/**/*.swift",
+      "Tools/Tools.xcodeproj/project.pbxproj"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Build and test the Swift project to ensure there are no compilation errors. Use xcodebuild to compile the project and run tests. If there are any build errors or test failures, identify and fix them. Focus on maintaining code quality and ensuring all tests pass."
+  }
+}

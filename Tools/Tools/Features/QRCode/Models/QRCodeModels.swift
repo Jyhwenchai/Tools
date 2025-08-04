@@ -52,7 +52,8 @@ struct QRCodeOptions: Codable {
     size: CGSize = CGSize(width: 200, height: 200),
     correctionLevel: QRCodeCorrectionLevel = .medium,
     foregroundColor: Color = .black,
-    backgroundColor: Color = .white) {
+    backgroundColor: Color = .white
+  ) {
     self.size = size
     self.correctionLevel = correctionLevel
     self.foregroundColor = foregroundColor
@@ -116,7 +117,9 @@ extension Color: Codable {
     var blue: CGFloat = 0
     var alpha: CGFloat = 0
 
-    nsColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    // Convert to RGB color space first to avoid crashes with catalog colors
+    let rgbColor = nsColor.usingColorSpace(.sRGB) ?? nsColor
+    rgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
 
     try container.encode(Double(red), forKey: .red)
     try container.encode(Double(green), forKey: .green)

@@ -9,9 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
   @State private var navigationManager = NavigationManager()
-  @State private var settings = AppSettings.shared
   @State private var isInitialized = false
   @State private var stabilityMonitor = ApplicationStabilityMonitor.shared
+  @ObservedObject private var settings = AppSettings.shared
 
   #if DEBUG
     @State private var performanceMonitor: PerformanceMonitor?
@@ -129,6 +129,7 @@ struct ContentView: View {
 struct SidebarView: View {
   @Binding
   var selection: NavigationManager.ToolType
+  @ObservedObject private var settings = AppSettings.shared
 
   var body: some View {
     List(NavigationManager.ToolType.allCases, id: \.self, selection: $selection) { tool in
@@ -153,6 +154,7 @@ struct ToolDetailView: View {
   let tool: NavigationManager.ToolType
   @State private var isLoading = true
   @State private var loadingProgress: Double = 0.0
+  @ObservedObject private var settings = AppSettings.shared
 
   var body: some View {
     VStack(spacing: 0) {
@@ -220,6 +222,10 @@ struct ToolDetailView: View {
       LazyToolView {
         TimeConverterView()
       }
+    case .colorProcessing:
+      LazyToolView {
+        ColorProcessingView()
+      }
     case .clipboard:
       LazyToolView {
         ClipboardManagerView()
@@ -269,6 +275,8 @@ struct ToolDetailView: View {
       0.08  // Reduced from 0.15
     case .imageProcessing:
       0.06  // Reduced from 0.12
+    case .colorProcessing:
+      0.05  // Color processing has moderate complexity
     case .settings:
       0.02  // Reduced from 0.05
     default:

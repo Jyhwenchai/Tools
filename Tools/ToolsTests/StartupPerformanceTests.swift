@@ -5,9 +5,11 @@
 //  Created by Kiro on 2025/7/20.
 //
 
+import SwiftData
 import SwiftUI
-@testable import Tools
 import XCTest
+
+@testable import Tools
 
 /// Tests for measuring and validating application startup performance
 @MainActor
@@ -203,8 +205,14 @@ final class StartupPerformanceTests: XCTestCase {
   func testClipboardServiceLazyPermissionHandling() throws {
     let startTime = CFAbsoluteTimeGetCurrent()
 
+    // Create a test model context
+    let schema = Schema([ClipboardItem.self])
+    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+    let modelContext = ModelContext(modelContainer)
+
     // Creating clipboard service should not trigger permission requests
-    _ = ClipboardService()
+    _ = ClipboardService(modelContext: modelContext)
 
     let endTime = CFAbsoluteTimeGetCurrent()
     let initTime = endTime - startTime
@@ -272,7 +280,7 @@ final class StartupPerformanceTests: XCTestCase {
     }
 
     if kerr == KERN_SUCCESS {
-      return Double(info.resident_size) / (1024 * 1024) // Convert to MB
+      return Double(info.resident_size) / (1024 * 1024)  // Convert to MB
     }
 
     return 0

@@ -7,21 +7,24 @@
 
 import Foundation
 import Testing
+
 @testable import Tools
 
 struct JSONModelsTests {
   // MARK: - JSONOperation Tests
 
-  @Test("JSONOperation 枚举值测试", arguments: [
-    (JSONOperation.format, "格式化", "格式化JSON，使其更易读"),
-    (JSONOperation.minify, "压缩", "压缩JSON，移除空格和换行"),
-    (JSONOperation.validate, "验证", "验证JSON格式是否正确"),
-    (JSONOperation.generateModel, "生成代码", "根据JSON生成模型代码")
-  ])
+  @Test(
+    "JSONOperation 枚举值测试",
+    arguments: [
+      (JSONOperation.format, "格式化", "格式化JSON，使其更易读"),
+      (JSONOperation.minify, "压缩", "压缩JSON，移除空格和换行"),
+      (JSONOperation.generateModel, "生成代码", "根据JSON生成模型代码"),
+    ])
   func jSONOperationValues(
     operation: JSONOperation,
     expectedRawValue: String,
-    expectedDescription: String) {
+    expectedDescription: String
+  ) {
     #expect(operation.rawValue == expectedRawValue)
     #expect(operation.id == expectedRawValue)
     #expect(operation.description == expectedDescription)
@@ -30,9 +33,9 @@ struct JSONModelsTests {
   @Test("JSONOperation 枚举完整性测试")
   func jSONOperationCompleteness() {
     let allCases = JSONOperation.allCases
-    #expect(allCases.count == 4)
+    #expect(allCases.count == 3)
 
-    let expectedOperations: [JSONOperation] = [.format, .minify, .validate, .generateModel]
+    let expectedOperations: [JSONOperation] = [.format, .minify, .generateModel]
     for expectedOperation in expectedOperations {
       #expect(allCases.contains(expectedOperation))
     }
@@ -40,16 +43,19 @@ struct JSONModelsTests {
 
   // MARK: - ProgrammingLanguage Tests
 
-  @Test("ProgrammingLanguage 枚举值测试", arguments: [
-    (ProgrammingLanguage.swift, "Swift", ".swift"),
-    (ProgrammingLanguage.java, "Java", ".java"),
-    (ProgrammingLanguage.python, "Python", ".py"),
-    (ProgrammingLanguage.typescript, "TypeScript", ".ts")
-  ])
+  @Test(
+    "ProgrammingLanguage 枚举值测试",
+    arguments: [
+      (ProgrammingLanguage.swift, "Swift", ".swift"),
+      (ProgrammingLanguage.java, "Java", ".java"),
+      (ProgrammingLanguage.python, "Python", ".py"),
+      (ProgrammingLanguage.typescript, "TypeScript", ".ts"),
+    ])
   func programmingLanguageValues(
     language: ProgrammingLanguage,
     expectedRawValue: String,
-    expectedExtension: String) {
+    expectedExtension: String
+  ) {
     #expect(language.rawValue == expectedRawValue)
     #expect(language.id == expectedRawValue)
     #expect(language.fileExtension == expectedExtension)
@@ -72,10 +78,10 @@ struct JSONModelsTests {
   func jSONProcessingResultSuccess() {
     let input = "{\"name\": \"John\"}"
     let output = """
-    {
-      "name" : "John"
-    }
-    """
+      {
+        "name" : "John"
+      }
+      """
 
     let result = JSONProcessingResult(
       operation: .format,
@@ -97,13 +103,13 @@ struct JSONModelsTests {
     let errorMessage = "JSON格式错误：多余的逗号"
 
     let result = JSONProcessingResult(
-      operation: .validate,
+      operation: .format,
       input: input,
       output: output,
       isValid: false,
       errorMessage: errorMessage)
 
-    #expect(result.operation == .validate)
+    #expect(result.operation == .format)
     #expect(result.input == input)
     #expect(result.output == output)
     #expect(result.isValid == false)
@@ -126,12 +132,13 @@ struct JSONModelsTests {
     #expect(result.timestamp <= afterCreation)
   }
 
-  @Test("JSONProcessingResult 不同操作类型测试", arguments: [
-    JSONOperation.format,
-    JSONOperation.minify,
-    JSONOperation.validate,
-    JSONOperation.generateModel
-  ])
+  @Test(
+    "JSONProcessingResult 不同操作类型测试",
+    arguments: [
+      JSONOperation.format,
+      JSONOperation.minify,
+      JSONOperation.generateModel,
+    ])
   func jSONProcessingResultDifferentOperations(operation: JSONOperation) {
     let result = JSONProcessingResult(
       operation: operation,
@@ -149,7 +156,7 @@ struct JSONModelsTests {
   func jSONProcessingResultEdgeCases() {
     // 空输入测试
     let emptyResult = JSONProcessingResult(
-      operation: .validate,
+      operation: .format,
       input: "",
       output: "",
       isValid: false,

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Testing
+
 @testable import Tools
 
 struct AccessibilityTests {
@@ -28,18 +29,21 @@ struct AccessibilityTests {
     }
   }
 
-  @Test("工具类型可访问性标签测试", arguments: [
-    (NavigationManager.ToolType.encryption, "加密解密", "文本加密解密工具"),
-    (NavigationManager.ToolType.json, "JSON工具", "JSON格式化和处理"),
-    (NavigationManager.ToolType.imageProcessing, "图片处理", "图片压缩和处理"),
-    (NavigationManager.ToolType.qrCode, "二维码", "二维码生成和识别"),
-    (NavigationManager.ToolType.timeConverter, "时间转换", "时间格式转换"),
-    (NavigationManager.ToolType.clipboard, "粘贴板", "粘贴板历史管理")
-  ])
+  @Test(
+    "工具类型可访问性标签测试",
+    arguments: [
+      (NavigationManager.ToolType.encryption, "加密解密", "文本加密解密工具"),
+      (NavigationManager.ToolType.json, "JSON工具", "JSON格式化和处理"),
+      (NavigationManager.ToolType.imageProcessing, "图片处理", "图片压缩和处理"),
+      (NavigationManager.ToolType.qrCode, "二维码", "二维码生成和识别"),
+      (NavigationManager.ToolType.timeConverter, "时间转换", "时间格式转换"),
+      (NavigationManager.ToolType.clipboard, "粘贴板", "粘贴板历史管理"),
+    ])
   func toolTypeAccessibilityLabels(
     toolType: NavigationManager.ToolType,
     expectedName: String,
-    expectedDescription: String) {
+    expectedDescription: String
+  ) {
     #expect(toolType.name == expectedName)
     #expect(toolType.description == expectedDescription)
 
@@ -71,11 +75,13 @@ struct AccessibilityTests {
     #expect(actionCalled == true)
   }
 
-  @Test("工具按钮样式可访问性测试", arguments: [
-    (ToolButton.ButtonStyle.primary, "主要操作按钮"),
-    (ToolButton.ButtonStyle.secondary, "次要操作按钮"),
-    (ToolButton.ButtonStyle.destructive, "危险操作按钮")
-  ])
+  @Test(
+    "工具按钮样式可访问性测试",
+    arguments: [
+      (ToolButton.ButtonStyle.primary, "主要操作按钮"),
+      (ToolButton.ButtonStyle.secondary, "次要操作按钮"),
+      (ToolButton.ButtonStyle.destructive, "危险操作按钮"),
+    ])
   func toolButtonStyleAccessibility(style: ToolButton.ButtonStyle, description _: String) {
     let button = ToolButton(
       title: "测试",
@@ -163,7 +169,7 @@ struct AccessibilityTests {
       .timeout,
       .noInternetConnection,
       .systemResourceUnavailable,
-      .unknown("未知错误")
+      .unknown("未知错误"),
     ]
 
     for error in errors {
@@ -180,8 +186,11 @@ struct AccessibilityTests {
       case let .invalidInput(message):
         #expect(description.contains("输入") || description.contains(message))
       case let .processingFailed(message):
-        #expect(description.contains("处理") || description.contains("失败") || description
-          .contains(message))
+        #expect(
+          description.contains("处理") || description.contains("失败")
+            || description
+              .contains(message)
+        )
       case .networkError:
         #expect(description.contains("网络") || description.contains("错误"))
       case .unsupportedFormat:
@@ -217,8 +226,6 @@ struct AccessibilityTests {
         #expect(description.contains("格式化"))
       case .minify:
         #expect(description.contains("压缩"))
-      case .validate:
-        #expect(description.contains("验证"))
       case .generateModel:
         #expect(description.contains("生成") && description.contains("代码"))
       }
@@ -322,7 +329,7 @@ struct AccessibilityTests {
       .highMemoryUsage(250.0),
       .highCPUUsage(85.5),
       .sustainedHighMemoryUsage(180.2),
-      .sustainedHighCPUUsage(75.8)
+      .sustainedHighCPUUsage(75.8),
     ]
 
     for warning in warnings {

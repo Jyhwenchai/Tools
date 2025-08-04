@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct SettingsView: View {
-  @State private var settings = AppSettings.shared
   @State private var showingResetAlert = false
   @State private var showingImportExport = false
   @State private var showingPrivacyPolicy = false
+
+  private var settings: AppSettings { AppSettings.shared }
 
   var body: some View {
     NavigationView {
@@ -21,7 +22,13 @@ struct SettingsView: View {
 
             Spacer()
 
-            Picker("主题", selection: $settings.theme) {
+            Picker(
+              "主题",
+              selection: Binding(
+                get: { settings.theme },
+                set: { settings.theme = $0 }
+              )
+            ) {
               ForEach(AppTheme.allCases, id: \.self) { theme in
                 Text(theme.rawValue).tag(theme)
               }
@@ -39,8 +46,14 @@ struct SettingsView: View {
 
             Spacer()
 
-            Toggle("", isOn: $settings.showProcessingAnimations)
-              .toggleStyle(.switch)
+            Toggle(
+              "",
+              isOn: Binding(
+                get: { settings.showProcessingAnimations },
+                set: { settings.showProcessingAnimations = $0 }
+              )
+            )
+            .toggleStyle(.switch)
           }
         }
 
@@ -61,8 +74,14 @@ struct SettingsView: View {
 
             Spacer()
 
-            Stepper("", value: $settings.maxClipboardHistory, in: 10...1000, step: 10)
-              .frame(width: 100)
+            Stepper(
+              "",
+              value: Binding(
+                get: { settings.maxClipboardHistory },
+                set: { settings.maxClipboardHistory = $0 }
+              ), in: 10...1000, step: 10
+            )
+            .frame(width: 100)
           }
 
           HStack {
@@ -74,8 +93,14 @@ struct SettingsView: View {
 
             Spacer()
 
-            Toggle("", isOn: $settings.autoSaveResults)
-              .toggleStyle(.switch)
+            Toggle(
+              "",
+              isOn: Binding(
+                get: { settings.autoSaveResults },
+                set: { settings.autoSaveResults = $0 }
+              )
+            )
+            .toggleStyle(.switch)
           }
 
           HStack {
@@ -87,8 +112,14 @@ struct SettingsView: View {
 
             Spacer()
 
-            Toggle("", isOn: $settings.autoCopyResults)
-              .toggleStyle(.switch)
+            Toggle(
+              "",
+              isOn: Binding(
+                get: { settings.autoCopyResults },
+                set: { settings.autoCopyResults = $0 }
+              )
+            )
+            .toggleStyle(.switch)
           }
 
           HStack {
@@ -100,8 +131,14 @@ struct SettingsView: View {
 
             Spacer()
 
-            Toggle("", isOn: $settings.confirmDestructiveActions)
-              .toggleStyle(.switch)
+            Toggle(
+              "",
+              isOn: Binding(
+                get: { settings.confirmDestructiveActions },
+                set: { settings.confirmDestructiveActions = $0 }
+              )
+            )
+            .toggleStyle(.switch)
           }
         }
 
@@ -123,8 +160,13 @@ struct SettingsView: View {
             Spacer()
 
             VStack {
-              Slider(value: $settings.defaultImageQuality, in: 0.1...1.0, step: 0.1)
-                .frame(width: 120)
+              Slider(
+                value: Binding(
+                  get: { settings.defaultImageQuality },
+                  set: { settings.defaultImageQuality = $0 }
+                ), in: 0.1...1.0, step: 0.1
+              )
+              .frame(width: 120)
 
               HStack {
                 Text("10%")
@@ -226,12 +268,13 @@ struct SettingsView: View {
 
 struct ImportExportSettingsView: View {
   @Environment(\.dismiss) private var dismiss
-  @State private var settings = AppSettings.shared
   @State private var exportedText = ""
   @State private var importText = ""
   @State private var showingExportSuccess = false
   @State private var showingImportError = false
   @State private var importErrorMessage = ""
+
+  private var settings: AppSettings { AppSettings.shared }
 
   var body: some View {
     NavigationView {

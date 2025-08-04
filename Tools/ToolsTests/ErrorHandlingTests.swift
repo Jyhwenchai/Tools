@@ -7,6 +7,7 @@
 
 import Foundation
 import Testing
+
 @testable import Tools
 
 struct ErrorHandlingTests {
@@ -89,7 +90,7 @@ struct ErrorHandlingTests {
 
     // Add multiple errors
     for index in 1...5 {
-      service.logError(.invalidInput("错误 \(i)"))
+      service.logError(.invalidInput("错误 \(index)"))
     }
 
     let history = service.getErrorHistory()
@@ -122,10 +123,10 @@ struct ErrorHandlingTests {
     service.clearErrorHistory()
 
     // Add various types of errors
-    service.logError(.timeout) // retryable
-    service.logError(.invalidInput("test")) // not retryable
-    service.logError(.networkError(NSError(domain: "test", code: 1))) // retryable
-    service.logError(.emptyInput) // not retryable
+    service.logError(.timeout)  // retryable
+    service.logError(.invalidInput("test"))  // not retryable
+    service.logError(.networkError(NSError(domain: "test", code: 1)))  // retryable
+    service.logError(.emptyInput)  // not retryable
 
     let stats = service.getErrorStatistics()
     #expect(stats.totalErrors == 4)
@@ -146,7 +147,8 @@ struct ErrorHandlingTests {
         initialDelay: 0.01,
         maxDelay: 0.1,
         backoffMultiplier: 2.0,
-        jitterRange: 1.0...1.0)) {
+        jitterRange: 1.0...1.0)
+    ) {
       attemptCount += 1
       if attemptCount < 3 {
         throw ToolError.timeout
@@ -174,14 +176,15 @@ struct ErrorHandlingTests {
         shouldRetry: { error in
           // Only retry timeout errors
           (error as? ToolError) == .timeout
-        }) {
-          attemptCount += 1
-          if attemptCount == 1 {
-            throw ToolError.timeout // This should be retried
-          } else {
-            throw ToolError.emptyInput // This should not be retried
-          }
         }
+      ) {
+        attemptCount += 1
+        if attemptCount == 1 {
+          throw ToolError.timeout  // This should be retried
+        } else {
+          throw ToolError.emptyInput  // This should not be retried
+        }
+      }
     } catch {
       // Should fail with emptyInput error after 2 attempts
       #expect((error as? ToolError) == .emptyInput)
@@ -200,10 +203,11 @@ struct ErrorHandlingTests {
         initialDelay: 0.01,
         maxDelay: 0.1,
         backoffMultiplier: 2.0,
-        jitterRange: 1.0...1.0)) {
+        jitterRange: 1.0...1.0)
+    ) {
       attemptCount += 1
       if attemptCount == 1 {
-        throw ToolError.processingFailed("临时失败") // retryable
+        throw ToolError.processingFailed("临时失败")  // retryable
       }
       return "成功"
     }
@@ -224,9 +228,10 @@ struct ErrorHandlingTests {
           initialDelay: 0.01,
           maxDelay: 0.1,
           backoffMultiplier: 2.0,
-          jitterRange: 1.0...1.0)) {
+          jitterRange: 1.0...1.0)
+      ) {
         attemptCount += 1
-        throw ToolError.emptyInput // not retryable
+        throw ToolError.emptyInput  // not retryable
       }
     } catch {
       // Should fail immediately without retry
@@ -260,7 +265,7 @@ struct ErrorHandlingTests {
 
   @Test("文件大小格式化测试")
   func fileSizeFormatting() {
-    let largeFileError = ToolError.fileTooLarge(1024 * 1024 * 10) // 10MB
+    let largeFileError = ToolError.fileTooLarge(1024 * 1024 * 10)  // 10MB
     let description = largeFileError.localizedDescription
 
     #expect(description.contains("文件过大"))
@@ -277,7 +282,7 @@ struct ErrorHandlingTests {
       .noInternetConnection,
       .timeout,
       .operationCancelled,
-      .fileNotFound("test")
+      .fileNotFound("test"),
     ]
 
     for error in errorsWithSuggestions {

@@ -12,6 +12,7 @@ struct LazyToolView<Content: View>: View {
   private let content: () -> Content
   @State private var isViewLoaded = false
   @State private var memoryWarning = false
+  @ObservedObject private var settings = AppSettings.shared
 
   init(@ViewBuilder content: @escaping () -> Content) {
     self.content = content
@@ -111,7 +112,7 @@ class MemoryManager {
     }
 
     if kerr == KERN_SUCCESS {
-      return Double(info.resident_size) / (1024 * 1024) // MB
+      return Double(info.resident_size) / (1024 * 1024)  // MB
     }
 
     return 0

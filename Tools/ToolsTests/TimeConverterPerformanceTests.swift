@@ -98,7 +98,7 @@ final class TimeConverterPerformanceTests: XCTestCase {
 
     // MARK: - Batch Processing Performance Tests
 
-    func testSmallBatchConversionPerformance() {
+    func testSmallBatchConversionPerformance() async {
         let items = Array(0..<10).map { i in
             BatchConversionItem(
                 input: String(1_640_995_200 + i),
@@ -110,13 +110,13 @@ final class TimeConverterPerformanceTests: XCTestCase {
         }
 
         measure {
-            let results = batchConversionService.processBatchConversion(items: items)
+            let results = await batchConversionService.processBatchConversion(items: items)
             XCTAssertEqual(results.count, 10)
             XCTAssertTrue(results.allSatisfy(\.success))
         }
     }
 
-    func testMediumBatchConversionPerformance() {
+    func testMediumBatchConversionPerformance() async {
         let items = Array(0..<100).map { i in
             BatchConversionItem(
                 input: String(1_640_995_200 + i),
@@ -128,7 +128,7 @@ final class TimeConverterPerformanceTests: XCTestCase {
         }
 
         measure {
-            let results = batchConversionService.processBatchConversion(items: items)
+            let results = await batchConversionService.processBatchConversion(items: items)
             XCTAssertEqual(results.count, 100)
             XCTAssertTrue(results.allSatisfy(\.success))
         }
