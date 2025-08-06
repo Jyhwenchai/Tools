@@ -52,226 +52,179 @@ class ColorProcessingErrorHandler: ObservableObject {
     /// Clear the current error
     func clearError() {
         currentError = nil
-        isRecovering = false
     }
 
-    /// Manually retry an operation
-    func retryOperation(
-        with error: ColorProcessingError, operation: @escaping () async throws -> Void
-    ) async {
-        guard error.isRetryable else { return }
+    /// Clear all error history
+    func clearHistory() {
+        errorHistory.removeAll()
+        retryAttempts.removeAll()
+    }
 
+    // MARK: - Recovery Methods
+
+    /// Attempt to recover from an error
+    private func attemptRecovery(for error: ColorProcessingError, context: String?) async {
         isRecovering = true
+        defer { isRecovering = false }
 
-        do {
-            // Add delay before retry
-            try await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000))
+        let errorKey = getErrorKey(for: error)
+        let currentAttempts = retryAttempts[errorKey, default: 0]
 
-            // Attempt the operation
-            try await operation()
-
-            // Success - clear error and reset retry count
-            clearError()
-            resetRetryCount(for: error)
-
-        } catch {
-            // Handle retry failure
-            if let colorError = error as? ColorProcessingError {
-                incrementRetryCount(for: colorError)
-            }
-
-            if let colorError = error as? ColorProcessingError {
-                handleError(colorError, context: "Retry attempt failed")
-            } else {
-                handleError(.unknown(error.localizedDescription), context: "Retry attempt failed")
-            }
+        guard currentAttempts < maxRetryAttempts else {
+            logError(error, context: "Max retry attempts reached")
+            return
         }
 
-        isRecovering = false
-    }
-
-    // MARK: - Private Recovery Methods
-
-    private func shouldAttemptRecovery(for error: ColorProcessingError) -> Bool {
-        let errorKey = errorKey(for: error)
-        let attempts = retryAttempts[errorKey, default: 0]
-        return attempts < maxRetryAttempts
-    }
-
-    private func attemptRecovery(for error: ColorProcessingError, context: String?) async {
-        guard shouldAttemptRecovery(for: error) else { return }
-
-        isRecovering = true
-        incrementRetryCount(for: error)
-
-        // Add delay before recovery attempt
+        // Wait before retry
         try? await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000))
 
-        let recovered = await performRecovery(for: error)
+        let recoverySuccessful = await performRecovery(for: error)
 
-        if recovered {
+        if recoverySuccessful {
+            retryAttempts[errorKey] = 0
             clearError()
-            resetRetryCount(for: error)
+            logRecovery(for: error, context: context)
         } else {
-            // Recovery failed, log it
-            logError(
-                error, context: "Recovery attempt failed", retryCount: getRetryCount(for: error))
+            retryAttempts[errorKey] = currentAttempts + 1
+            logError(error, context: "Recovery attempt \(currentAttempts + 1) failed")
         }
-
-        isRecovering = false
     }
 
+    /// Perform specific recovery actions based on error type
     private func performRecovery(for error: ColorProcessingError) async -> Bool {
         switch error {
-        case .systemResourceUnavailable:
-            // Wait and check if resource becomes available
-            try? await Task.sleep(nanoseconds: 2_000_000_000)  // 2 seconds
-            return true  // Assume resource might be available now
-
-        case .operationTimeout:
-            // For timeout errors, just return true to allow retry
+        case .conversionFailed, .colorSpaceConversionFailed:
+            // For conversion failures, assume retry might work
             return true
 
         case .screenSamplingFailed:
             // For screen sampling failures, check permissions and try again
             return await recoverScreenSampling()
 
-        case .paletteOperationFailed:
-            // For palette operations, try to reinitialize
-            return await recoverPaletteOperation()
-
         case .colorSpaceConversionFailed:
             // For color space conversion, try alternative approach
             return true  // Allow retry with potentially different approach
 
+        case .systemResourceUnavailable:
+            // For system resource issues, wait and try again
+            return true
+
         default:
-            return false  // No automatic recovery available
+            // For other errors, no automatic recovery
+            return false
         }
     }
 
+    /// Attempt to recover screen sampling functionality
     private func recoverScreenSampling() async -> Bool {
-        // Check if screen capture permission is available
-        let hasPermission = CGPreflightScreenCaptureAccess()
-        return hasPermission
-    }
-
-    private func recoverPaletteOperation() async -> Bool {
-        // For palette operations, assume recovery is possible
-        // In a real implementation, this might check database connectivity, etc.
+        // For screen sampling, assume recovery is possible after delay
+        // In a real implementation, this might check permissions, etc.
         return true
     }
 
-    // MARK: - Retry Count Management
+    // MARK: - Utility Methods
 
-    private func errorKey(for error: ColorProcessingError) -> String {
-        // Create a unique key for each error type to track retry attempts
+    /// Check if recovery should be attempted for an error
+    private func shouldAttemptRecovery(for error: ColorProcessingError) -> Bool {
+        let errorKey = getErrorKey(for: error)
+        let attempts = retryAttempts[errorKey, default: 0]
+        return attempts < maxRetryAttempts && error.isRetryable
+    }
+
+    /// Generate a unique key for error tracking
+    private func getErrorKey(for error: ColorProcessingError) -> String {
         switch error {
         case .invalidColorFormat(let format, _):
             return "invalidColorFormat_\(format)"
         case .conversionFailed(let from, let to):
-            return "conversionFailed_\(from.rawValue)_\(to.rawValue)"
+            return "conversionFailed_\(from)_\(to)"
         case .screenSamplingFailed:
             return "screenSamplingFailed"
-        case .paletteOperationFailed(let operation):
-            return "paletteOperationFailed_\(operation)"
         default:
             return String(describing: error)
         }
     }
 
-    private func incrementRetryCount(for error: ColorProcessingError) {
-        let key = errorKey(for: error)
-        retryAttempts[key, default: 0] += 1
-    }
+    /// Log an error to history
+    private func logError(_ error: ColorProcessingError, context: String?) {
+        let errorKey = getErrorKey(for: error)
+        let retryCount = retryAttempts[errorKey, default: 0]
 
-    private func getRetryCount(for error: ColorProcessingError) -> Int {
-        let key = errorKey(for: error)
-        return retryAttempts[key, default: 0]
-    }
+        let entry = ErrorLogEntry(
+            error: error,
+            context: context,
+            retryCount: retryCount
+        )
 
-    private func resetRetryCount(for error: ColorProcessingError) {
-        let key = errorKey(for: error)
-        retryAttempts.removeValue(forKey: key)
-    }
-
-    // MARK: - Error Logging
-
-    private func logError(_ error: ColorProcessingError, context: String?, retryCount: Int = 0) {
-        let entry = ErrorLogEntry(error: error, context: context, retryCount: retryCount)
         errorHistory.append(entry)
 
-        // Keep only last 50 error entries
-        if errorHistory.count > 50 {
-            errorHistory.removeFirst(errorHistory.count - 50)
+        // Keep only recent entries
+        if errorHistory.count > 100 {
+            errorHistory.removeFirst(errorHistory.count - 100)
         }
 
-        // Print to console for debugging
-        print("🎨 ColorProcessing Error: \(error.localizedDescription ?? "Unknown error")")
+        // Log to console for debugging
+        print("🎨 ColorProcessing Error: \(error.localizedDescription)")
         if let context = context {
             print("   Context: \(context)")
         }
-        print("   Timestamp: \(entry.timestamp)")
-        print("   Retryable: \(error.isRetryable)")
-        print("   Severity: \(error.severity)")
-        if retryCount > 0 {
-            print("   Retry Count: \(retryCount)")
+    }
+
+    /// Log successful recovery
+    private func logRecovery(for error: ColorProcessingError, context: String?) {
+        print("✅ ColorProcessing Recovery: Successfully recovered from \(error)")
+        if let context = context {
+            print("   Context: \(context)")
         }
     }
 
-    // MARK: - Error Statistics
+    // MARK: - Error Analysis
 
-    var errorStats: ErrorStatistics {
+    /// Get error statistics
+    func getErrorStatistics() -> ColorProcessingErrorStatistics {
         let totalErrors = errorHistory.count
-        let errorsByType = Dictionary(grouping: errorHistory, by: { $0.error })
-        let errorsBySeverity = Dictionary(grouping: errorHistory, by: { $0.error.severity })
+        let errorTypes = Dictionary(grouping: errorHistory) { $0.error.severity }
 
-        return ErrorStatistics(
+        return ColorProcessingErrorStatistics(
             totalErrors: totalErrors,
-            errorsByType: errorsByType.mapValues { $0.count },
-            errorsBySeverity: errorsBySeverity.mapValues { $0.count },
-            recentErrors: Array(errorHistory.suffix(10))
+            criticalErrors: errorTypes[.critical]?.count ?? 0,
+            errors: errorTypes[.error]?.count ?? 0,
+            warnings: errorTypes[.warning]?.count ?? 0,
+            infoMessages: errorTypes[.info]?.count ?? 0,
+            mostCommonError: getMostCommonError(),
+            averageRetryCount: getAverageRetryCount()
         )
     }
 
-    struct ErrorStatistics {
-        let totalErrors: Int
-        let errorsByType: [ColorProcessingError: Int]
-        let errorsBySeverity: [ErrorSeverity: Int]
-        let recentErrors: [ErrorLogEntry]
+    /// Get the most common error type
+    private func getMostCommonError() -> ColorProcessingError? {
+        let errorCounts = Dictionary(grouping: errorHistory) { getErrorKey(for: $0.error) }
+        let mostCommon = errorCounts.max { $0.value.count < $1.value.count }
+        return mostCommon?.value.first?.error
     }
 
-    // MARK: - Error History Management
-
-    func clearErrorHistory() {
-        errorHistory.removeAll()
-        retryAttempts.removeAll()
+    /// Get average retry count
+    private func getAverageRetryCount() -> Double {
+        guard !errorHistory.isEmpty else { return 0 }
+        let totalRetries = errorHistory.reduce(0) { $0 + $1.retryCount }
+        return Double(totalRetries) / Double(errorHistory.count)
     }
 
+    /// Export error log as string
     func exportErrorLog() -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .medium
-
         var log = "Color Processing Error Log\n"
-        log += "Generated: \(formatter.string(from: Date()))\n"
+        log += "Generated: \(Date())\n"
         log += "Total Errors: \(errorHistory.count)\n\n"
 
-        for entry in errorHistory {
-            log += "[\(formatter.string(from: entry.timestamp))] "
-            log += "\(entry.error.severity) - \(entry.error.localizedDescription ?? "Unknown")\n"
-
+        for entry in errorHistory.suffix(50) {  // Last 50 errors
+            log += "[\(entry.timestamp)] "
+            log += "\(entry.error.severity) - \(entry.error.localizedDescription)\n"
             if let context = entry.context {
                 log += "  Context: \(context)\n"
             }
-
             if entry.retryCount > 0 {
-                log += "  Retry Count: \(entry.retryCount)\n"
+                log += "  Retries: \(entry.retryCount)\n"
             }
-
-            if let suggestion = entry.error.recoverySuggestion {
-                log += "  Suggestion: \(suggestion)\n"
-            }
-
             log += "\n"
         }
 
@@ -279,74 +232,77 @@ class ColorProcessingErrorHandler: ObservableObject {
     }
 }
 
-// MARK: - Error Recovery Strategies
+// MARK: - Error Statistics
+
+struct ColorProcessingErrorStatistics {
+    let totalErrors: Int
+    let criticalErrors: Int
+    let errors: Int
+    let warnings: Int
+    let infoMessages: Int
+    let mostCommonError: ColorProcessingError?
+    let averageRetryCount: Double
+}
+
+// MARK: - Recovery Suggestions
 
 extension ColorProcessingErrorHandler {
-
-    /// Get specific recovery strategy for an error
-    func getRecoveryStrategy(for error: ColorProcessingError) -> RecoveryStrategy {
+    /// Get recovery suggestion for an error
+    func getRecoverySuggestion(for error: ColorProcessingError) -> RecoverySuggestion {
         switch error {
         case .invalidColorFormat, .invalidColorValue, .emptyColorInput:
-            return .userInput("Please correct the input and try again")
-
-        case .screenSamplingPermissionDenied:
-            return .systemSettings(
-                "Open System Preferences > Privacy & Security > Screen Recording")
+            return .userAction("Please check your input and try again")
 
         case .conversionFailed, .colorSpaceConversionFailed:
             return .retry("Try the conversion again")
 
+        case .screenSamplingPermissionDenied:
+            return .userAction("Grant screen recording permission in System Preferences")
+
         case .screenSamplingFailed, .screenSamplingTimeout:
             return .retry("Try sampling again")
 
-        case .paletteOperationFailed:
-            return .retry("Try the palette operation again")
-
-        case .paletteStorageFull:
-            return .userAction("Delete some colors to make space")
+        case .systemResourceUnavailable:
+            return .retry("Try again in a moment")
 
         case .memoryPressure:
-            return .systemAction("Close other applications to free memory")
+            return .userAction("Close other applications to free up memory")
 
         case .operationCancelled, .screenSamplingCancelled:
-            return .none("Operation was cancelled by user")
+            return .info("Operation was cancelled")
 
         default:
             return .retry("Try the operation again")
         }
     }
+}
 
-    enum RecoveryStrategy {
-        case none(String)
-        case retry(String)
-        case userInput(String)
-        case userAction(String)
-        case systemSettings(String)
-        case systemAction(String)
+enum RecoverySuggestion {
+    case retry(String)
+    case userAction(String)
+    case info(String)
 
-        var description: String {
-            switch self {
-            case .none(let message), .retry(let message), .userInput(let message),
-                .userAction(let message), .systemSettings(let message), .systemAction(let message):
-                return message
-            }
+    var message: String {
+        switch self {
+        case .retry(let message), .userAction(let message), .info(let message):
+            return message
         }
+    }
 
-        var actionType: String {
-            switch self {
-            case .none:
-                return "No Action"
-            case .retry:
-                return "Retry"
-            case .userInput:
-                return "Fix Input"
-            case .userAction:
-                return "User Action"
-            case .systemSettings:
-                return "System Settings"
-            case .systemAction:
-                return "System Action"
-            }
+    var actionType: ActionType {
+        switch self {
+        case .retry:
+            return .retry
+        case .userAction:
+            return .userAction
+        case .info:
+            return .info
         }
+    }
+
+    enum ActionType {
+        case retry
+        case userAction
+        case info
     }
 }

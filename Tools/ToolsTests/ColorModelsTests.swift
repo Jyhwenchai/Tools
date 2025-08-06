@@ -283,111 +283,6 @@ final class ColorModelsTests: XCTestCase {
         XCTAssertNotEqual(savedColor1, savedColor3)
     }
 
-    // MARK: - ColorPalette Tests
-
-    func testColorPaletteInitialization() {
-        let palette = ColorPalette(name: "Test Palette")
-
-        XCTAssertEqual(palette.name, "Test Palette")
-        XCTAssertTrue(palette.isEmpty)
-        XCTAssertEqual(palette.count, 0)
-        XCTAssertNotNil(palette.id)
-        XCTAssertTrue(palette.dateCreated <= Date())
-        XCTAssertTrue(palette.dateModified <= Date())
-    }
-
-    func testColorPaletteAddColor() {
-        var palette = ColorPalette()
-        let rgb = RGBColor(red: 0, green: 255, blue: 0, alpha: 1.0)
-        let colorRep = ColorRepresentation(
-            rgb: rgb,
-            hex: "#00FF00",
-            hsl: HSLColor(hue: 120, saturation: 100, lightness: 50),
-            hsv: HSVColor(hue: 120, saturation: 100, value: 100),
-            cmyk: CMYKColor(cyan: 100, magenta: 0, yellow: 100, key: 0),
-            lab: LABColor(lightness: 80, a: -50, b: 50)
-        )
-
-        palette.addColor(name: "Green", color: colorRep, tags: ["primary", "nature"])
-
-        XCTAssertFalse(palette.isEmpty)
-        XCTAssertEqual(palette.count, 1)
-        XCTAssertEqual(palette.colors.first?.name, "Green")
-        XCTAssertEqual(palette.colors.first?.tags, ["primary", "nature"])
-    }
-
-    func testColorPaletteRemoveColor() {
-        var palette = ColorPalette()
-        let rgb = RGBColor(red: 0, green: 0, blue: 255, alpha: 1.0)
-        let colorRep = ColorRepresentation(
-            rgb: rgb,
-            hex: "#0000FF",
-            hsl: HSLColor(hue: 240, saturation: 100, lightness: 50),
-            hsv: HSVColor(hue: 240, saturation: 100, value: 100),
-            cmyk: CMYKColor(cyan: 100, magenta: 100, yellow: 0, key: 0),
-            lab: LABColor(lightness: 30, a: 25, b: -75)
-        )
-
-        palette.addColor(name: "Blue", color: colorRep)
-        let colorId = palette.colors.first!.id
-
-        XCTAssertEqual(palette.count, 1)
-
-        palette.removeColor(id: colorId)
-
-        XCTAssertTrue(palette.isEmpty)
-        XCTAssertEqual(palette.count, 0)
-    }
-
-    func testColorPaletteExportImportJSON() throws {
-        var palette = ColorPalette(name: "Test Export Palette")
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 0.8)
-        let colorRep = ColorRepresentation(
-            rgb: rgb,
-            hex: "#8040C0CC",
-            hsl: HSLColor(hue: 270, saturation: 50, lightness: 50, alpha: 0.8),
-            hsv: HSVColor(hue: 270, saturation: 67, value: 75, alpha: 0.8),
-            cmyk: CMYKColor(cyan: 33, magenta: 67, yellow: 0, key: 25),
-            lab: LABColor(lightness: 40, a: 30, b: -60)
-        )
-
-        palette.addColor(name: "Purple", color: colorRep, tags: ["purple", "test"])
-
-        // Test export
-        let jsonData = try palette.exportToJSON()
-        XCTAssertFalse(jsonData.isEmpty)
-
-        // Test import
-        let importedPalette = try ColorPalette.importFromJSON(jsonData)
-        XCTAssertEqual(importedPalette.name, palette.name)
-        XCTAssertEqual(importedPalette.count, palette.count)
-        XCTAssertEqual(importedPalette.colors.first?.name, "Purple")
-        XCTAssertEqual(importedPalette.colors.first?.tags, ["purple", "test"])
-    }
-
-    func testColorPaletteExportCSV() {
-        var palette = ColorPalette(name: "CSV Test Palette")
-        let rgb = RGBColor(red: 255, green: 128, blue: 64, alpha: 1.0)
-        let colorRep = ColorRepresentation(
-            rgb: rgb,
-            hex: "#FF8040",
-            hsl: HSLColor(hue: 20, saturation: 100, lightness: 62.5),
-            hsv: HSVColor(hue: 20, saturation: 75, value: 100),
-            cmyk: CMYKColor(cyan: 0, magenta: 50, yellow: 75, key: 0),
-            lab: LABColor(lightness: 70, a: 30, b: 50)
-        )
-
-        palette.addColor(name: "Orange Sunset", color: colorRep, tags: ["orange", "warm"])
-
-        let csv = palette.exportToCSV()
-
-        XCTAssertTrue(csv.contains("Name,RGB,Hex,HSL,HSV,CMYK,LAB,Tags,Date Created"))
-        XCTAssertTrue(csv.contains("\"Orange Sunset\""))
-        XCTAssertTrue(csv.contains("\"rgb(255, 128, 64)\""))
-        XCTAssertTrue(csv.contains("\"#FF8040\""))
-        XCTAssertTrue(csv.contains("\"orange; warm\""))
-    }
-
     // MARK: - ColorProcessingError Tests
 
     func testColorProcessingErrorDescriptions() {
@@ -396,7 +291,6 @@ final class ColorModelsTests: XCTestCase {
         let conversionError = ColorProcessingError.conversionFailed(from: .rgb, to: .hsl)
         let permissionError = ColorProcessingError.screenSamplingPermissionDenied
         let samplingError = ColorProcessingError.screenSamplingFailed(reason: "Test failure")
-        let paletteError = ColorProcessingError.paletteOperationFailed(operation: "save")
         let valueError = ColorProcessingError.invalidColorValue(
             component: "red", value: "300", range: "0-255")
 
@@ -404,14 +298,12 @@ final class ColorModelsTests: XCTestCase {
         XCTAssertNotNil(conversionError.errorDescription)
         XCTAssertNotNil(permissionError.errorDescription)
         XCTAssertNotNil(samplingError.errorDescription)
-        XCTAssertNotNil(paletteError.errorDescription)
         XCTAssertNotNil(valueError.errorDescription)
 
         XCTAssertNotNil(invalidFormatError.recoverySuggestion)
         XCTAssertNotNil(conversionError.recoverySuggestion)
         XCTAssertNotNil(permissionError.recoverySuggestion)
         XCTAssertNotNil(samplingError.recoverySuggestion)
-        XCTAssertNotNil(paletteError.recoverySuggestion)
         XCTAssertNotNil(valueError.recoverySuggestion)
     }
 }

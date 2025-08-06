@@ -48,14 +48,6 @@ final class ColorProcessingViewTests: XCTestCase {
         XCTAssertNotNil(hostingController.view, "ScreenSamplerView integration should work")
     }
 
-    func testColorPaletteViewIntegration() {
-        let view = ColorProcessingView()
-
-        // Test that ColorPaletteView is integrated
-        let hostingController = NSHostingController(rootView: view)
-        XCTAssertNotNil(hostingController.view, "ColorPaletteView integration should work")
-    }
-
     // MARK: - State Management Tests
 
     func testSharedStateManagement() {
@@ -164,11 +156,4 @@ final class ColorProcessingViewTests: XCTestCase {
         XCTAssertNotNil(hostingController.view, "Color sampling workflow should work")
     }
 
-    func testPaletteManagementWorkflow() {
-        let view = ColorProcessingView()
-        let hostingController = NSHostingController(rootView: view)
-
-        // Test palette management workflow
-        XCTAssertNotNil(hostingController.view, "Palette management workflow should work")
-    }
 }

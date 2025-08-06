@@ -13,8 +13,7 @@ struct ToolsApp: App {
   // SwiftData model container - optimized for faster startup
   var sharedModelContainer: ModelContainer = {
     let schema = Schema([
-      ClipboardItem.self,
-      SavedColorModel.self,
+      ClipboardItem.self
     ])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

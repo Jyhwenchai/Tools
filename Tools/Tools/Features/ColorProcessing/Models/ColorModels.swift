@@ -526,218 +526,6 @@ struct ColorFormatDetector {
     }
 }
 
-// MARK: - Color Palette Data Models
-
-/// Saved color with metadata for palette management
-struct SavedColor: Identifiable, Equatable, Codable {
-    let id: UUID
-    let name: String
-    let color: ColorRepresentation
-    let dateCreated: Date
-    let tags: [String]
-
-    init(name: String, color: ColorRepresentation, tags: [String] = []) {
-        self.id = UUID()
-        self.name = name
-        self.color = color
-        self.dateCreated = Date()
-        self.tags = tags
-    }
-
-    init(id: UUID, name: String, color: ColorRepresentation, dateCreated: Date, tags: [String]) {
-        self.id = id
-        self.name = name
-        self.color = color
-        self.dateCreated = dateCreated
-        self.tags = tags
-    }
-}
-
-/// Color palette collection with management methods
-struct ColorPalette: Equatable, Codable {
-    private(set) var colors: [SavedColor]
-    let id: UUID
-    let name: String
-    let dateCreated: Date
-    let dateModified: Date
-
-    init(name: String = "Default Palette") {
-        self.colors = []
-        self.id = UUID()
-        self.name = name
-        self.dateCreated = Date()
-        self.dateModified = Date()
-    }
-
-    init(id: UUID, name: String, colors: [SavedColor], dateCreated: Date, dateModified: Date) {
-        self.id = id
-        self.name = name
-        self.colors = colors
-        self.dateCreated = dateCreated
-        self.dateModified = dateModified
-    }
-
-    // MARK: - Collection Management
-
-    mutating func addColor(_ savedColor: SavedColor) {
-        colors.append(savedColor)
-    }
-
-    mutating func addColor(name: String, color: ColorRepresentation, tags: [String] = []) {
-        let savedColor = SavedColor(name: name, color: color, tags: tags)
-        colors.append(savedColor)
-    }
-
-    mutating func removeColor(id: UUID) {
-        colors.removeAll { $0.id == id }
-    }
-
-    mutating func removeColor(at index: Int) {
-        guard index >= 0 && index < colors.count else { return }
-        colors.remove(at: index)
-    }
-
-    mutating func updateColor(id: UUID, name: String? = nil, tags: [String]? = nil) {
-        guard let index = colors.firstIndex(where: { $0.id == id }) else { return }
-        let existingColor = colors[index]
-
-        let updatedColor = SavedColor(
-            id: existingColor.id,
-            name: name ?? existingColor.name,
-            color: existingColor.color,
-            dateCreated: existingColor.dateCreated,
-            tags: tags ?? existingColor.tags
-        )
-
-        colors[index] = updatedColor
-    }
-
-    func findColor(id: UUID) -> SavedColor? {
-        return colors.first { $0.id == id }
-    }
-
-    func findColors(withTag tag: String) -> [SavedColor] {
-        return colors.filter { $0.tags.contains(tag) }
-    }
-
-    func findColors(withName name: String) -> [SavedColor] {
-        return colors.filter { $0.name.localizedCaseInsensitiveContains(name) }
-    }
-
-    var isEmpty: Bool {
-        return colors.isEmpty
-    }
-
-    var count: Int {
-        return colors.count
-    }
-
-    // MARK: - Export/Import Support
-
-    func exportToJSON() throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return try encoder.encode(self)
-    }
-
-    static func importFromJSON(_ data: Data) throws -> ColorPalette {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(ColorPalette.self, from: data)
-    }
-
-    func exportToCSV() -> String {
-        var csv = "Name,RGB,Hex,HSL,HSV,CMYK,LAB,Tags,Date Created\n"
-
-        for color in colors {
-            let name = "\"\(color.name.replacingOccurrences(of: "\"", with: "\"\""))\""
-            let rgb = "\"\(color.color.rgbString)\""
-            let hex = "\"\(color.color.hexString)\""
-            let hsl = "\"\(color.color.hslString)\""
-            let hsv = "\"\(color.color.hsvString)\""
-            let cmyk = "\"\(color.color.cmykString)\""
-            let lab = "\"\(color.color.labString)\""
-            let tags = "\"\(color.tags.joined(separator: "; "))\""
-            let dateFormatter = ISO8601DateFormatter()
-            let date = "\"\(dateFormatter.string(from: color.dateCreated))\""
-
-            csv += "\(name),\(rgb),\(hex),\(hsl),\(hsv),\(cmyk),\(lab),\(tags),\(date)\n"
-        }
-
-        return csv
-    }
-}
-
-// MARK: - SwiftData Compatibility Extensions
-
-#if canImport(SwiftData)
-    import SwiftData
-
-    /// SwiftData model for SavedColor
-    @Model
-    final class SavedColorModel {
-        @Attribute(.unique) var id: UUID
-        var name: String
-        var colorData: Data
-        var dateCreated: Date
-        var tags: [String]
-
-        init(savedColor: SavedColor) throws {
-            self.id = savedColor.id
-            self.name = savedColor.name
-            self.dateCreated = savedColor.dateCreated
-            self.tags = savedColor.tags
-
-            let encoder = JSONEncoder()
-            self.colorData = try encoder.encode(savedColor.color)
-        }
-
-        func toSavedColor() throws -> SavedColor {
-            let decoder = JSONDecoder()
-            let color = try decoder.decode(ColorRepresentation.self, from: colorData)
-
-            return SavedColor(
-                id: id,
-                name: name,
-                color: color,
-                dateCreated: dateCreated,
-                tags: tags
-            )
-        }
-    }
-
-    /// SwiftData model for ColorPalette
-    @Model
-    final class ColorPaletteModel {
-        @Attribute(.unique) var id: UUID
-        var name: String
-        var dateCreated: Date
-        var dateModified: Date
-        @Relationship(deleteRule: .cascade) var savedColors: [SavedColorModel]
-
-        init(palette: ColorPalette) throws {
-            self.id = palette.id
-            self.name = palette.name
-            self.dateCreated = palette.dateCreated
-            self.dateModified = palette.dateModified
-            self.savedColors = try palette.colors.map { try SavedColorModel(savedColor: $0) }
-        }
-
-        func toColorPalette() throws -> ColorPalette {
-            let colors = try savedColors.map { try $0.toSavedColor() }
-
-            return ColorPalette(
-                id: id,
-                name: name,
-                colors: colors,
-                dateCreated: dateCreated,
-                dateModified: dateModified
-            )
-        }
-    }
-#endif
-
 // MARK: - Error Types
 
 /// Comprehensive error handling for color processing operations
@@ -760,15 +548,6 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
     case screenSamplingCancelled
     case displayNotFound
     case pixelAccessFailed(point: CGPoint)
-
-    // Palette operation errors
-    case paletteOperationFailed(operation: String)
-    case paletteImportFailed(reason: String)
-    case paletteExportFailed(reason: String)
-    case colorAlreadyExists(name: String)
-    case colorNotFound(id: UUID)
-    case paletteStorageFull
-    case paletteCorrupted
 
     // System errors
     case systemResourceUnavailable
@@ -810,22 +589,6 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
             return "Display not found for color sampling"
         case .pixelAccessFailed(let point):
             return "Failed to access pixel at point (\(Int(point.x)), \(Int(point.y)))"
-
-        // Palette operation errors
-        case .paletteOperationFailed(let operation):
-            return "Palette operation failed: \(operation)"
-        case .paletteImportFailed(let reason):
-            return "Failed to import palette: \(reason)"
-        case .paletteExportFailed(let reason):
-            return "Failed to export palette: \(reason)"
-        case .colorAlreadyExists(let name):
-            return "Color '\(name)' already exists in palette"
-        case .colorNotFound(let id):
-            return "Color not found in palette (ID: \(id.uuidString.prefix(8)))"
-        case .paletteStorageFull:
-            return "Palette storage is full. Maximum colors reached"
-        case .paletteCorrupted:
-            return "Palette data is corrupted and cannot be loaded"
 
         // System errors
         case .systemResourceUnavailable:
@@ -875,22 +638,6 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
         case .pixelAccessFailed:
             return "Try sampling a different area of the screen"
 
-        // Palette operation errors
-        case .paletteOperationFailed:
-            return "Please try the operation again"
-        case .paletteImportFailed:
-            return "Check the file format and try importing again"
-        case .paletteExportFailed:
-            return "Check available disk space and try exporting again"
-        case .colorAlreadyExists:
-            return "Choose a different name or update the existing color"
-        case .colorNotFound:
-            return "The color may have been deleted. Refresh the palette"
-        case .paletteStorageFull:
-            return "Delete some colors to make space for new ones"
-        case .paletteCorrupted:
-            return "Try importing a backup or create a new palette"
-
         // System errors
         case .systemResourceUnavailable:
             return "Try again later or restart the application"
@@ -912,8 +659,6 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
             return true
         case .screenSamplingFailed, .screenSamplingTimeout, .pixelAccessFailed:
             return true
-        case .paletteOperationFailed, .paletteImportFailed, .paletteExportFailed:
-            return true
         case .systemResourceUnavailable, .operationTimeout:
             return true
         case .unknown:
@@ -923,8 +668,6 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
         case .invalidColorFormat, .invalidColorValue, .emptyColorInput, .unsupportedColorFormat:
             return false
         case .screenSamplingPermissionDenied, .screenSamplingCancelled, .displayNotFound:
-            return false
-        case .colorAlreadyExists, .colorNotFound, .paletteStorageFull, .paletteCorrupted:
             return false
         case .memoryPressure, .operationCancelled:
             return false
@@ -937,13 +680,13 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
         switch self {
         case .invalidColorFormat, .invalidColorValue, .emptyColorInput:
             return .warning
-        case .precisionLoss, .colorAlreadyExists:
+        case .precisionLoss:
             return .warning
-        case .screenSamplingPermissionDenied, .paletteStorageFull:
+        case .screenSamplingPermissionDenied:
             return .error
-        case .screenSamplingFailed, .paletteOperationFailed:
+        case .screenSamplingFailed:
             return .error
-        case .systemResourceUnavailable, .memoryPressure, .paletteCorrupted:
+        case .systemResourceUnavailable, .memoryPressure:
             return .critical
         case .operationCancelled, .screenSamplingCancelled:
             return .info
@@ -982,20 +725,6 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
             return true
         case (.pixelAccessFailed(let a1), .pixelAccessFailed(let a2)):
             return a1 == a2
-        case (.paletteOperationFailed(let a1), .paletteOperationFailed(let a2)):
-            return a1 == a2
-        case (.paletteImportFailed(let a1), .paletteImportFailed(let a2)):
-            return a1 == a2
-        case (.paletteExportFailed(let a1), .paletteExportFailed(let a2)):
-            return a1 == a2
-        case (.colorAlreadyExists(let a1), .colorAlreadyExists(let a2)):
-            return a1 == a2
-        case (.colorNotFound(let a1), .colorNotFound(let a2)):
-            return a1 == a2
-        case (.paletteStorageFull, .paletteStorageFull):
-            return true
-        case (.paletteCorrupted, .paletteCorrupted):
-            return true
         case (.systemResourceUnavailable, .systemResourceUnavailable):
             return true
         case (.memoryPressure, .memoryPressure):
@@ -1053,25 +782,6 @@ enum ColorProcessingError: LocalizedError, Equatable, Hashable {
             hasher.combine("pixelAccessFailed")
             hasher.combine(point.x)
             hasher.combine(point.y)
-        case .paletteOperationFailed(let operation):
-            hasher.combine("paletteOperationFailed")
-            hasher.combine(operation)
-        case .paletteImportFailed(let reason):
-            hasher.combine("paletteImportFailed")
-            hasher.combine(reason)
-        case .paletteExportFailed(let reason):
-            hasher.combine("paletteExportFailed")
-            hasher.combine(reason)
-        case .colorAlreadyExists(let name):
-            hasher.combine("colorAlreadyExists")
-            hasher.combine(name)
-        case .colorNotFound(let id):
-            hasher.combine("colorNotFound")
-            hasher.combine(id)
-        case .paletteStorageFull:
-            hasher.combine("paletteStorageFull")
-        case .paletteCorrupted:
-            hasher.combine("paletteCorrupted")
         case .systemResourceUnavailable:
             hasher.combine("systemResourceUnavailable")
         case .memoryPressure:

@@ -5,301 +5,256 @@ import XCTest
 @MainActor
 final class ColorProcessingPerformanceTests: XCTestCase {
 
+    // MARK: - Test Properties
+
     var colorConversionService: ColorConversionService!
     var colorSamplingService: ColorSamplingService!
-    var colorPaletteService: ColorPaletteService!
 
     override func setUp() {
         super.setUp()
         colorConversionService = ColorConversionService()
         colorSamplingService = ColorSamplingService()
-        colorPaletteService = ColorPaletteService()
     }
 
     override func tearDown() {
         colorConversionService = nil
         colorSamplingService = nil
-        colorPaletteService = nil
         super.tearDown()
     }
 
     // MARK: - Color Conversion Performance Tests
 
-    func testRGBToHSLConversionPerformance() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
-
-        measure {
-            for _ in 0..<1000 {
-                _ = colorConversionService.rgbToHSL(rgb)
-            }
+    func testRGBToHexConversionPerformance() {
+        let rgbValues = (0..<1000).map { i in
+            "rgb(\(i % 256), \((i * 2) % 256), \((i * 3) % 256))"
         }
-    }
-
-    func testRGBToHSVConversionPerformance() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
 
         measure {
-            for _ in 0..<1000 {
-                _ = colorConversionService.rgbToHSV(rgb)
-            }
-        }
-    }
-
-    func testRGBToCMYKConversionPerformance() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
-
-        measure {
-            for _ in 0..<1000 {
-                _ = colorConversionService.rgbToCMYK(rgb)
-            }
-        }
-    }
-
-    func testRGBToLABConversionPerformance() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
-
-        measure {
-            for _ in 0..<1000 {
-                _ = colorConversionService.rgbToLAB(rgb)
+            for rgbValue in rgbValues {
+                _ = colorConversionService.createColorRepresentation(
+                    from: .rgb, value: rgbValue)
             }
         }
     }
 
     func testHexToRGBConversionPerformance() {
-        let hexColors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF"]
+        let hexValues = (0..<1000).map { i in
+            String(format: "#%02X%02X%02X", i % 256, (i * 2) % 256, (i * 3) % 256)
+        }
 
         measure {
-            for _ in 0..<1000 {
-                for hex in hexColors {
-                    _ = colorConversionService.hexToRGB(hex)
-                }
+            for hexValue in hexValues {
+                _ = colorConversionService.createColorRepresentation(
+                    from: .hex, value: hexValue)
             }
         }
     }
 
-    func testRGBToHexConversionPerformance() {
-        let rgbColors = [
-            RGBColor(red: 255, green: 0, blue: 0, alpha: 1.0),
-            RGBColor(red: 0, green: 255, blue: 0, alpha: 1.0),
-            RGBColor(red: 0, green: 0, blue: 255, alpha: 1.0),
-            RGBColor(red: 255, green: 255, blue: 0, alpha: 1.0),
-            RGBColor(red: 255, green: 0, blue: 255, alpha: 1.0),
-            RGBColor(red: 0, green: 255, blue: 255, alpha: 1.0),
-        ]
+    func testHSLConversionPerformance() {
+        let hslValues = (0..<1000).map { i in
+            "hsl(\(i % 360), \((i * 2) % 100)%, \((i * 3) % 100)%)"
+        }
 
         measure {
-            for _ in 0..<1000 {
-                for rgb in rgbColors {
-                    _ = colorConversionService.rgbToHex(rgb)
-                }
+            for hslValue in hslValues {
+                _ = colorConversionService.createColorRepresentation(
+                    from: .hsl, value: hslValue)
             }
         }
     }
 
-    // MARK: - Bidirectional Conversion Performance Tests
-
-    func testRoundTripRGBToHSLPerformance() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
+    func testHSVConversionPerformance() {
+        let hsvValues = (0..<1000).map { i in
+            "hsv(\(i % 360), \((i * 2) % 100)%, \((i * 3) % 100)%)"
+        }
 
         measure {
-            for _ in 0..<500 {
-                let hsl = colorConversionService.rgbToHSL(rgb)
-                _ = colorConversionService.hslToRGB(hsl)
+            for hsvValue in hsvValues {
+                _ = colorConversionService.createColorRepresentation(
+                    from: .hsv, value: hsvValue)
             }
         }
     }
 
-    func testRoundTripRGBToHSVPerformance() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
+    func testCMYKConversionPerformance() {
+        let cmykValues = (0..<1000).map { i in
+            "cmyk(\(i % 100)%, \((i * 2) % 100)%, \((i * 3) % 100)%, \((i * 4) % 100)%)"
+        }
 
         measure {
-            for _ in 0..<500 {
-                let hsv = colorConversionService.rgbToHSV(rgb)
-                _ = colorConversionService.hsvToRGB(hsv)
+            for cmykValue in cmykValues {
+                _ = colorConversionService.createColorRepresentation(
+                    from: .cmyk, value: cmykValue)
             }
         }
     }
 
-    func testRoundTripRGBToCMYKPerformance() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
+    func testLABConversionPerformance() {
+        let labValues = (0..<1000).map { i in
+            "lab(\(i % 100), \((i * 2) % 128 - 64), \((i * 3) % 128 - 64))"
+        }
 
         measure {
-            for _ in 0..<500 {
-                let cmyk = colorConversionService.rgbToCMYK(rgb)
-                _ = colorConversionService.cmykToRGB(cmyk)
+            for labValue in labValues {
+                _ = colorConversionService.createColorRepresentation(
+                    from: .lab, value: labValue)
             }
         }
     }
 
     // MARK: - Color Validation Performance Tests
 
-    func testRGBValidationPerformance() {
-        let validInputs = ["rgb(255, 0, 0)", "rgba(128, 64, 192, 0.5)", "rgb(0, 255, 0)"]
-        let invalidInputs = ["rgb(256, 0, 0)", "rgba(128, 64)", "not-a-color"]
+    func testColorValidationPerformance() {
+        let testInputs = [
+            ("rgb", (0..<1000).map { i in "rgb(\(i % 256), \((i * 2) % 256), \((i * 3) % 256))" }),
+            (
+                "hex",
+                (0..<1000).map { i in
+                    String(format: "#%02X%02X%02X", i % 256, (i * 2) % 256, (i * 3) % 256)
+                }
+            ),
+            (
+                "hsl",
+                (0..<1000).map { i in "hsl(\(i % 360), \((i * 2) % 100)%, \((i * 3) % 100)%)" }
+            ),
+            (
+                "hsv",
+                (0..<1000).map { i in "hsv(\(i % 360), \((i * 2) % 100)%, \((i * 3) % 100)%)" }
+            ),
+            (
+                "cmyk",
+                (0..<1000).map { i in
+                    "cmyk(\(i % 100)%, \((i * 2) % 100)%, \((i * 3) % 100)%, \((i * 4) % 100)%)"
+                }
+            ),
+            (
+                "lab",
+                (0..<1000).map { i in
+                    "lab(\(i % 100), \((i * 2) % 128 - 64), \((i * 3) % 128 - 64))"
+                }
+            ),
+        ]
 
-        measure {
-            for _ in 0..<1000 {
-                for input in validInputs + invalidInputs {
-                    _ = RGBColor.validate(input)
+        for (formatName, inputs) in testInputs {
+            measure(metrics: [XCTClockMetric()]) {
+                for input in inputs {
+                    let format = ColorFormat(rawValue: formatName.uppercased()) ?? .rgb
+                    _ = ColorFormatDetector.validateInput(input, expectedFormat: format)
                 }
             }
         }
     }
 
-    func testHexValidationPerformance() {
-        let validInputs = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00"]
-        let invalidInputs = ["#GG0000", "#FF00", "not-a-hex"]
+    // MARK: - Color Format Detection Performance Tests
 
-        measure {
-            for _ in 0..<1000 {
-                for input in validInputs + invalidInputs {
-                    _ = HexColor.validate(input)
-                }
-            }
-        }
-    }
+    func testColorFormatDetectionPerformance() {
+        let mixedInputs = [
+            "rgb(255, 0, 0)", "#FF0000", "hsl(0, 100%, 50%)",
+            "hsv(0, 100%, 100%)", "cmyk(0%, 100%, 100%, 0%)",
+            "lab(53, 80, 67)", "rgba(255, 0, 0, 0.5)",
+            "#FF0000FF", "hsla(0, 100%, 50%, 0.5)",
+        ]
 
-    func testHSLValidationPerformance() {
-        let validInputs = ["hsl(0, 100%, 50%)", "hsla(120, 50%, 75%, 0.8)"]
-        let invalidInputs = ["hsl(361, 100%, 50%)", "hsl(0, 101%, 50%)"]
-
-        measure {
-            for _ in 0..<1000 {
-                for input in validInputs + invalidInputs {
-                    _ = HSLColor.validate(input)
-                }
-            }
-        }
-    }
-
-    // MARK: - Color Palette Performance Tests
-
-    func testColorPaletteAddPerformance() {
-        let colors = (0..<100).map { i in
-            ColorRepresentation(
-                rgb: RGBColor(
-                    red: Double(i % 256), green: Double((i * 2) % 256), blue: Double((i * 3) % 256)),
-                hex: String(format: "#%02X%02X%02X", i % 256, (i * 2) % 256, (i * 3) % 256),
-                hsl: HSLColor(hue: Double(i % 360), saturation: 50, lightness: 50),
-                hsv: HSVColor(hue: Double(i % 360), saturation: 50, value: 50),
-                cmyk: CMYKColor(cyan: 0, magenta: 0, yellow: 0, key: 50),
-                lab: LABColor(lightness: 50, a: 0, b: 0)
-            )
+        let testData = (0..<1000).map { i in
+            mixedInputs[i % mixedInputs.count]
         }
 
         measure {
-            for color in colors {
-                colorPaletteService.addColor(name: "Test Color", color: color)
-            }
-            colorPaletteService.clearPalette()
-        }
-    }
-
-    func testColorPaletteSearchPerformance() {
-        // Add test colors to palette
-        for i in 0..<100 {
-            let color = ColorRepresentation(
-                rgb: RGBColor(
-                    red: Double(i % 256), green: Double((i * 2) % 256), blue: Double((i * 3) % 256)),
-                hex: String(format: "#%02X%02X%02X", i % 256, (i * 2) % 256, (i * 3) % 256),
-                hsl: HSLColor(hue: Double(i % 360), saturation: 50, lightness: 50),
-                hsv: HSVColor(hue: Double(i % 360), saturation: 50, value: 50),
-                cmyk: CMYKColor(cyan: 0, magenta: 0, yellow: 0, key: 50),
-                lab: LABColor(lightness: 50, a: 0, b: 0)
-            )
-            colorPaletteService.addColor(name: "Test Color \(i)", color: color)
-        }
-
-        measure {
-            for i in 0..<50 {
-                _ = colorPaletteService.findColors(withName: "Test Color \(i)")
+            for input in testData {
+                _ = ColorFormatDetector.detectFormat(input)
             }
         }
-
-        colorPaletteService.clearPalette()
     }
 
     // MARK: - Memory Usage Tests
 
     func testColorConversionMemoryUsage() {
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
-
         // Test that repeated conversions don't cause memory leaks
-        for _ in 0..<10000 {
-            let hsl = colorConversionService.rgbToHSL(rgb)
-            let hsv = colorConversionService.rgbToHSV(rgb)
-            let cmyk = colorConversionService.rgbToCMYK(rgb)
-            let lab = colorConversionService.rgbToLAB(rgb)
-            let hex = colorConversionService.rgbToHex(rgb)
-
-            // Convert back to ensure no memory accumulation
-            _ = colorConversionService.hslToRGB(hsl)
-            _ = colorConversionService.hsvToRGB(hsv)
-            _ = colorConversionService.cmykToRGB(cmyk)
-            _ = colorConversionService.hexToRGB(hex)
-        }
-
-        XCTAssertTrue(true, "Memory usage test completed without crashes")
-    }
-
-    func testColorPaletteMemoryUsage() {
-        // Test that adding and removing many colors doesn't cause memory leaks
-        for cycle in 0..<10 {
-            // Add colors
-            for i in 0..<100 {
-                let color = ColorRepresentation(
-                    rgb: RGBColor(
-                        red: Double(i % 256), green: Double((i * 2) % 256),
-                        blue: Double((i * 3) % 256)),
-                    hex: String(format: "#%02X%02X%02X", i % 256, (i * 2) % 256, (i * 3) % 256),
-                    hsl: HSLColor(hue: Double(i % 360), saturation: 50, lightness: 50),
-                    hsv: HSVColor(hue: Double(i % 360), saturation: 50, value: 50),
-                    cmyk: CMYKColor(cyan: 0, magenta: 0, yellow: 0, key: 50),
-                    lab: LABColor(lightness: 50, a: 0, b: 0)
-                )
-                colorPaletteService.addColor(name: "Cycle \(cycle) Color \(i)", color: color)
+        measure(metrics: [XCTMemoryMetric()]) {
+            for i in 0..<10000 {
+                let rgbValue = "rgb(\(i % 256), \((i * 2) % 256), \((i * 3) % 256))"
+                _ = colorConversionService.createColorRepresentation(
+                    from: .rgb, value: rgbValue)
             }
-
-            // Clear palette
-            colorPaletteService.clearPalette()
         }
-
-        XCTAssertTrue(true, "Palette memory usage test completed without crashes")
     }
 
-    // MARK: - Concurrent Access Performance Tests
+    // MARK: - Concurrent Processing Tests
 
     func testConcurrentColorConversion() {
-        let expectation = XCTestExpectation(description: "Concurrent color conversion")
+        let expectation = XCTestExpectation(description: "Concurrent conversion")
         expectation.expectedFulfillmentCount = 10
 
-        let rgb = RGBColor(red: 128, green: 64, blue: 192, alpha: 1.0)
-
-        for i in 0..<10 {
-            DispatchQueue.global(qos: .userInitiated).async {
-                for _ in 0..<100 {
-                    _ = self.colorConversionService.rgbToHSL(rgb)
-                    _ = self.colorConversionService.rgbToHSV(rgb)
-                    _ = self.colorConversionService.rgbToCMYK(rgb)
+        measure {
+            for i in 0..<10 {
+                DispatchQueue.global().async {
+                    let rgbValue = "rgb(\(i * 25), \(i * 25), \(i * 25))"
+                    _ = self.colorConversionService.createColorRepresentation(
+                        from: .rgb, value: rgbValue)
+                    expectation.fulfill()
                 }
-                expectation.fulfill()
             }
         }
 
-        wait(for: [expectation], timeout: 10.0)
+        wait(for: [expectation], timeout: 5.0)
     }
 
-    // MARK: - Debounced Input Performance Tests
+    // MARK: - Error Handling Performance Tests
 
-    func testDebouncedValidationPerformance() {
-        let inputs = ["#FF0000", "#00FF00", "#0000FF", "rgb(255, 0, 0)", "hsl(0, 100%, 50%)"]
+    func testErrorHandlingPerformance() {
+        let invalidInputs = [
+            "invalid", "rgb()", "hex(#)", "hsl(invalid)",
+            "hsv(999, 999, 999)", "cmyk(200%, 200%, 200%, 200%)",
+            "lab(200, 300, 300)", "", "   ", "null",
+        ]
 
         measure {
+            for input in invalidInputs {
+                for format in ColorFormat.allCases {
+                    _ = colorConversionService.createColorRepresentation(
+                        from: format, value: input)
+                }
+            }
+        }
+    }
+
+    // MARK: - Large Dataset Tests
+
+    func testLargeDatasetProcessing() {
+        let largeDataset = (0..<10000).map { i in
+            "rgb(\(i % 256), \((i * 2) % 256), \((i * 3) % 256))"
+        }
+
+        measure {
+            let results = largeDataset.compactMap { rgbValue in
+                colorConversionService.createColorRepresentation(
+                    from: .rgb, value: rgbValue)
+            }
+            XCTAssertEqual(results.count, largeDataset.count)
+        }
+    }
+
+    // MARK: - Stress Tests
+
+    func testColorConversionStressTest() {
+        // Stress test with rapid successive conversions
+        measure {
             for _ in 0..<1000 {
-                for input in inputs {
-                    // Simulate rapid input changes
-                    _ = ColorFormatDetector.detectFormat(input)
-                    _ = ColorFormatDetector.validateInput(input, expectedFormat: .hex)
+                let randomR = Int.random(in: 0...255)
+                let randomG = Int.random(in: 0...255)
+                let randomB = Int.random(in: 0...255)
+                let rgbValue = "rgb(\(randomR), \(randomG), \(randomB))"
+
+                let result = colorConversionService.createColorRepresentation(
+                    from: .rgb, value: rgbValue)
+
+                switch result {
+                case .success(let color):
+                    XCTAssertEqual(Int(color.rgb.red), randomR)
+                    XCTAssertEqual(Int(color.rgb.green), randomG)
+                    XCTAssertEqual(Int(color.rgb.blue), randomB)
+                case .failure:
+                    XCTFail("Valid RGB conversion should not fail")
                 }
             }
         }

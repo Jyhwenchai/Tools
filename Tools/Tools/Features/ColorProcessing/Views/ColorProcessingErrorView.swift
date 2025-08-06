@@ -173,7 +173,7 @@ struct ColorProcessingErrorRecoveryView: View {
             }
 
             // Recovery strategy
-            let strategy = errorHandler.getRecoveryStrategy(for: error)
+            let strategy = errorHandler.getRecoverySuggestion(for: error)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Recovery Options")
@@ -184,7 +184,7 @@ struct ColorProcessingErrorRecoveryView: View {
                     Image(systemName: "lightbulb")
                         .foregroundColor(.orange)
 
-                    Text(strategy.description)
+                    Text(strategy.message)
                         .font(.caption)
                 }
                 .padding(.horizontal, 12)
@@ -317,10 +317,7 @@ struct ColorProcessingErrorStateView<Content: View>: View {
                 error: errorHandler.currentError,
                 onRetry: {
                     if let error = errorHandler.currentError {
-                        await errorHandler.retryOperation(with: error) {
-                            // This would be implemented by the specific view
-                            // that uses this error state management
-                        }
+                        errorHandler.handleError(error, context: "Retry attempt")
                     }
                 },
                 onDismiss: {
@@ -342,7 +339,6 @@ struct ColorProcessingErrorStateView<Content: View>: View {
             .conversionFailed(from: .rgb, to: .hex),
             .screenSamplingPermissionDenied,
             .screenSamplingFailed(reason: "Display not found"),
-            .paletteOperationFailed(operation: "save"),
             .memoryPressure,
             .operationTimeout,
         ]

@@ -35,12 +35,6 @@ class ColorProcessingToastService: ObservableObject {
         toastManager.show(message, type: .success, duration: 2.0)
     }
 
-    /// Show success toast for color saved to palette
-    func showColorSaved(name: String) {
-        let message = "Color '\(name)' saved to palette"
-        toastManager.show(message, type: .success, duration: 2.5)
-    }
-
     /// Show success toast for color sampled from screen
     func showColorSampled(color: ColorRepresentation) {
         let message = "Color sampled: \(color.hexString)"
@@ -51,27 +45,6 @@ class ColorProcessingToastService: ObservableObject {
     func showColorConverted(from: ColorFormat, to: ColorFormat) {
         let message = "Converted from \(from.rawValue) to \(to.rawValue)"
         toastManager.show(message, type: .success, duration: 1.5)
-    }
-
-    /// Show success toast for palette operations
-    func showPaletteOperationSuccess(_ operation: String, details: String? = nil) {
-        var message = "Palette \(operation) successful"
-        if let details = details {
-            message += ": \(details)"
-        }
-        toastManager.show(message, type: .success, duration: 2.5)
-    }
-
-    /// Show success toast for palette import
-    func showPaletteImported(count: Int) {
-        let message = "Imported \(count) color\(count == 1 ? "" : "s") to palette"
-        toastManager.show(message, type: .success, duration: 3.0)
-    }
-
-    /// Show success toast for palette export
-    func showPaletteExported(count: Int, format: String) {
-        let message = "Exported \(count) color\(count == 1 ? "" : "s") to \(format)"
-        toastManager.show(message, type: .success, duration: 3.0)
     }
 
     // MARK: - Error Notifications
@@ -99,12 +72,6 @@ class ColorProcessingToastService: ObservableObject {
     func showPrecisionLossWarning(from: ColorFormat, to: ColorFormat) {
         let message = "Precision loss may occur converting from \(from.rawValue) to \(to.rawValue)"
         toastManager.show(message, type: .warning, duration: 3.5)
-    }
-
-    /// Show warning for duplicate color in palette
-    func showDuplicateColorWarning(name: String) {
-        let message = "Color '\(name)' already exists in palette"
-        toastManager.show(message, type: .warning, duration: 3.0)
     }
 
     // MARK: - Info Notifications
@@ -332,17 +299,6 @@ extension ColorProcessingToastService {
             showColorCopied(format: format, value: value)
         case .failure(let error):
             showError(message: "Failed to copy to clipboard: \(error.localizedDescription)")
-        }
-    }
-
-    /// Show toast for file operation result
-    func showFileOperationResult(_ result: Result<String, ColorProcessingError>, operation: String)
-    {
-        switch result {
-        case .success(let details):
-            showPaletteOperationSuccess(operation, details: details)
-        case .failure(let error):
-            showError(error)
         }
     }
 
